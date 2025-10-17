@@ -126,7 +126,7 @@ export default function MyBookingsPage() {
     return (
       <Container className="text-center mt-5">
         <Spinner animation="border" />
-        <p>Hold on i am loading your bookings...</p>
+        <p>Hold on i am loading your bookings for you...</p>
       </Container>
     );
   }

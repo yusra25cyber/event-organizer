@@ -82,7 +82,8 @@ export default function AuthPage() {
             Create an account
           </Button>
           <p style={{ fontSize: "12px" }}>
-            By signing up, you agree to the Terms of Service and Privacy Policy.
+            By signing up???????????? you agree to the Terms of Service and
+            Privacy Policy.
           </p>
 
           <p className="mt-5" style={{ fontWeight: "bold" }}>
