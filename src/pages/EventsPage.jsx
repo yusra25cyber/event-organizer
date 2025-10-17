@@ -1,28 +1,26 @@
-import React, { useState, useEffect, useContext } from "react"; // <-- NEW: added useContext
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import useLocalStorage from "use-local-storage";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
-import { UserContext } from "../contexts/UserContext.jsx"; // <-- NEW: Import UserContext
+import { UserContext } from "../contexts/UserContext.jsx";
 
 export default function EventsPage() {
   const [authToken, setAuthToken] = useLocalStorage("authToken", "");
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
-  const { user } = useContext(UserContext); // <-- NEW: Get the logged-in user from the context
-
-  // Security check useEffect (no change)
+  const { user } = useContext(UserContext);
+  // redirect the user to login page
   useEffect(() => {
     if (!authToken) {
       navigate("/login");
     }
   }, [authToken, navigate]);
-
-  // Fetch events useEffect (no change)
+  // fetch events from the api when one person has logged in successfully
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const apiUrl =
-          "https://4b218185-7839-41a5-ace6-2c97fdf391c6-00-1luspot23m8xm.sisko.replit.dev"; // Replace with your URL
+          "https://b37d9196-e0d4-4aa4-9d08-56491faf01a1-00-zcuh3tm471ep.sisko.replit.dev";
         const response = await fetch(`${apiUrl}/api/events`);
         const data = await response.json();
         setEvents(data);
@@ -35,14 +33,13 @@ export default function EventsPage() {
     }
   }, [authToken]);
 
-  // Logout function (no change)
+  // remove the token from local storage wen person clicks logout
+
   const handleLogout = () => {
     setAuthToken("");
   };
 
-  // <-- NEW: The function to handle booking an event -->
   const handleBook = async (eventId, eventTitle) => {
-    // Check if the user object is available
     if (!user || !user.id) {
       alert("Could not verify user. Please try logging in again.");
       return;
@@ -50,13 +47,13 @@ export default function EventsPage() {
 
     try {
       const apiUrl =
-        "https://4b218185-7839-41a5-ace6-2c97fdf391c6-00-1luspot23m8xm.sisko.replit.dev"; // Replace with your URL
+        "https://b37d9196-e0d4-4aa4-9d08-56491faf01a1-00-zcuh3tm471ep.sisko.replit.dev";
 
       const bookingData = {
         user_id: user.id,
         event_id: eventId,
-        number_of_tickets: 1, // Defaulting to 1 for now
-        notes: "", // Defaulting to an empty note
+        number_of_tickets: 1,
+        notes: "",
       };
 
       const response = await fetch(`${apiUrl}/api/bookings`, {
@@ -70,7 +67,6 @@ export default function EventsPage() {
         navigate("/my-bookings");
       } else {
         const errorData = await response.json();
-        // The API sends a helpful error for duplicate bookings
         alert(`Booking failed: ${errorData.error || "Please try again."}`);
       }
     } catch (error) {
@@ -81,7 +77,6 @@ export default function EventsPage() {
 
   return (
     <Container className="mt-4">
-      {/* Header section (no change) */}
       <Row className="mb-3">
         <Col>
           <h1>Upcoming Events</h1>
@@ -99,7 +94,6 @@ export default function EventsPage() {
         </Col>
       </Row>
 
-      {/* Event cards section */}
       <Row>
         {events.length > 0 ? (
           events.map((event) => (
@@ -122,7 +116,6 @@ export default function EventsPage() {
                   <Card.Text>
                     <strong>Location:</strong> {event.location}
                   </Card.Text>
-                  {/* <-- NEW: The onClick handler is now connected --> */}
                   <Button
                     variant="primary"
                     onClick={() => handleBook(event.id, event.title)}
@@ -134,7 +127,7 @@ export default function EventsPage() {
             </Col>
           ))
         ) : (
-          <p>Loading upcoming events...</p> // Changed this message to be more accurate
+          <p>Loading the upcoming events...</p>
         )}
       </Row>
     </Container>

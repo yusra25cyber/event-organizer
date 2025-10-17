@@ -1,11 +1,9 @@
 import React, { createContext, useState, useEffect } from "react";
 import useLocalStorage from "use-local-storage";
-import { jwtDecode } from "jwt-decode"; // We will try the simplest import first.
+import { jwtDecode } from "jwt-decode";
 
-// 1. Create the context and export it
 export const UserContext = createContext();
 
-// 2. Create the provider component and make it the default export
 export default function UserProvider({ children }) {
   const [authToken, setAuthToken] = useLocalStorage("authToken", null);
   const [user, setUser] = useState(null);
@@ -13,7 +11,6 @@ export default function UserProvider({ children }) {
   useEffect(() => {
     if (authToken) {
       try {
-        // Use the jwtDecode function directly
         const decodedToken = jwtDecode(authToken);
         setUser(decodedToken);
       } catch (error) {
@@ -24,7 +21,7 @@ export default function UserProvider({ children }) {
     } else {
       setUser(null);
     }
-  }, [authToken, setAuthToken]); // Removed setUser from dependency array
+  }, [authToken, setAuthToken]);
 
   const contextValue = {
     authToken,

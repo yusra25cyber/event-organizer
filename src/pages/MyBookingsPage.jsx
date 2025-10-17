@@ -20,21 +20,19 @@ export default function MyBookingsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
 
-  // Security check
   useEffect(() => {
     if (!authToken) {
       navigate("/");
     }
   }, [authToken, navigate]);
 
-  // Fetch this user's bookings
   useEffect(() => {
     const fetchBookings = async () => {
       if (!user) return;
       setLoading(true);
       try {
         const apiUrl =
-          "https://4b218185-7839-41a5-ace6-2c97fdf391c6-00-1luspot23m8xm.sisko.replit.dev"; // Replace with your URL
+          "https://b37d9196-e0d4-4aa4-9d08-56491faf01a1-00-zcuh3tm471ep.sisko.replit.dev";
         const response = await fetch(`${apiUrl}/api/users/${user.id}/bookings`);
         const data = await response.json();
         setBookings(data);
@@ -47,7 +45,6 @@ export default function MyBookingsPage() {
     fetchBookings();
   }, [user]);
 
-  // --- Handlers ---
   const handleShowEditModal = (booking) => {
     setEditingBooking(booking);
     setShowEditModal(true);
@@ -63,7 +60,7 @@ export default function MyBookingsPage() {
     if (!editingBooking) return;
     try {
       const apiUrl =
-        "https://4b218185-7839-41a5-ace6-2c97fdf391c6-00-1luspot23m8xm.sisko.replit.dev"; // Replace with your URL
+        "https://b37d9196-e0d4-4aa4-9d08-56491faf01a1-00-zcuh3tm471ep.sisko.replit.dev";
       const updatedData = {
         number_of_tickets: editingBooking.number_of_tickets,
         notes: editingBooking.notes,
@@ -80,7 +77,7 @@ export default function MyBookingsPage() {
       if (response.ok) {
         alert("Booking updated successfully!");
         const updatedBookingFromServer = await response.json();
-        // Correctly update the specific booking in the list
+
         setBookings(
           bookings.map((b) =>
             b.booking_id === editingBooking.booking_id
@@ -104,10 +101,10 @@ export default function MyBookingsPage() {
   };
 
   const handleCancel = async (bookingId) => {
-    if (window.confirm("Are you sure you want to cancel this booking?")) {
+    if (window.confirm("Are you sure you want to cancel this booking?😒")) {
       try {
         const apiUrl =
-          "https://4b218185-7839-41a5-ace6-2c97fdf391c6-00-1luspot23m8xm.sisko.replit.dev"; // Replace with your URL
+          "https://b37d9196-e0d4-4aa4-9d08-56491faf01a1-00-zcuh3tm471ep.sisko.replit.dev";
         const response = await fetch(`${apiUrl}/api/bookings/${bookingId}`, {
           method: "DELETE",
         });
@@ -129,14 +126,13 @@ export default function MyBookingsPage() {
     return (
       <Container className="text-center mt-5">
         <Spinner animation="border" />
-        <p>Loading your bookings...</p>
+        <p>Hold on i am loading your bookings...</p>
       </Container>
     );
   }
 
   return (
     <Container className="mt-4">
-      {/* THIS IS THE PART THAT WAS MISSING */}
       <Row className="mb-3 align-items-center">
         <Col>
           <h1>My Bookings</h1>
@@ -189,12 +185,10 @@ export default function MyBookingsPage() {
             </Col>
           ))
         ) : (
-          <p>You have no bookings yet. Why not browse some events?</p>
+          <p>You have no bookings yet. go check some fun events bro </p>
         )}
       </Row>
-      {/* END OF THE MISSING PART */}
 
-      {/* The Modal goes here, at the end but inside the main Container */}
       <Modal show={showEditModal} onHide={handleCloseEditModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>Edit Booking for "{editingBooking?.title}"</Modal.Title>
