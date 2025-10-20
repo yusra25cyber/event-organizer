@@ -9,7 +9,7 @@ export default function AuthPage() {
     "https://media.istockphoto.com/id/1448698612/photo/diversity-hands-and-team-above-in-support-trust-and-unity-for-collaboration-agreement-or.jpg?s=612x612&w=0&k=20&c=gGqdVAEvyopmhqELxQ1tgrqXZkCmHWi5nCleGGDuHJU=";
 
   const url =
-    "https://97d892e5-fd2f-4991-ae77-726bce5900b5-00-10vsuv10ma3hz.sisko.replit.dev";
+    "https://8da55a4c-73b5-4dd5-93de-db81d8c45267-00-1ypb5wu3v6hea.pike.replit.dev";
 
   const [modalShow, setModalShow] = useState(null);
   const handleShowSignUp = () => setModalShow("SignUp");
