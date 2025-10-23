@@ -24,7 +24,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (authToken) {
-      navigate("/events");
+      navigate("/dashboard");
     }
   }, [authToken, navigate]);
 
