@@ -1,43 +1,33 @@
+// src/pages/EventsPage.jsx - REFACTORED AND IMPROVED
+
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import useLocalStorage from "use-local-storage";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import { UserContext } from "../contexts/UserContext.jsx";
+import { EVENTS_API_URL } from "../apiConfig"; // Use our centralized API config
 
 export default function EventsPage() {
-  const [authToken, setAuthToken] = useLocalStorage("authToken", "");
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
-  const { user } = useContext(UserContext);
-  // redirect the user to login page
-  useEffect(() => {
-    if (!authToken) {
-      navigate("/login");
-    }
-  }, [authToken, navigate]);
-  // fetch events from the api when one person has logged in successfully
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useContext(UserContext); // We get the user directly from our context
+
+  // fetch events from the api
   useEffect(() => {
     const fetchEvents = async () => {
+      setIsLoading(true);
       try {
-        const apiUrl =
-          "https://b37d9196-e0d4-4aa4-9d08-56491faf01a1-00-zcuh3tm471ep.sisko.replit.dev";
-        const response = await fetch(`${apiUrl}/api/events`);
+        const response = await fetch(`${EVENTS_API_URL}/api/events`);
         const data = await response.json();
         setEvents(data);
       } catch (error) {
         console.error("Error fetching events:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
-    if (authToken) {
-      fetchEvents();
-    }
-  }, [authToken]);
-
-  // remove the token from local storage wen person clicks logout
-
-  const handleLogout = () => {
-    setAuthToken("");
-  };
+    fetchEvents();
+  }, []); // The dependency array is empty because this page is already protected by the router
 
   const handleBook = async (eventId, eventTitle) => {
     if (!user || !user.id) {
@@ -46,17 +36,14 @@ export default function EventsPage() {
     }
 
     try {
-      const apiUrl =
-        "https://b37d9196-e0d4-4aa4-9d08-56491faf01a1-00-zcuh3tm471ep.sisko.replit.dev";
-
       const bookingData = {
         user_id: user.id,
         event_id: eventId,
-        number_of_tickets: 1,
+        number_of_tickets: 1, // Default to 1 ticket
         notes: "",
       };
 
-      const response = await fetch(`${apiUrl}/api/bookings`, {
+      const response = await fetch(`${EVENTS_API_URL}/api/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingData),
@@ -75,21 +62,27 @@ export default function EventsPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <Container className="text-center mt-5">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-3">Loading upcoming events...</p>
+      </Container>
+    );
+  }
+
   return (
     <Container className="mt-4">
-      <Row className="mb-3">
+      <Row className="mb-3 align-items-center">
         <Col>
-          <h1>Upcoming Events</h1>
+          <h1 className="display-5">Explore Upcoming Events</h1>
         </Col>
         <Col className="text-end">
           <Button
-            variant="outline-secondary"
-            onClick={() => navigate("/my-bookings")}
+            variant="outline-primary"
+            onClick={() => navigate("/dashboard")}
           >
-            My Bookings
-          </Button>
-          <Button variant="danger" onClick={handleLogout} className="ms-2">
-            Logout
+            Back to Dashboard
           </Button>
         </Col>
       </Row>
@@ -97,27 +90,28 @@ export default function EventsPage() {
       <Row>
         {events.length > 0 ? (
           events.map((event) => (
-            <Col key={event.id} md={4} className="mb-4">
-              <Card>
+            <Col key={event.id} md={4} lg={3} className="mb-4">
+              <Card className="h-100 shadow-sm">
                 <Card.Img
                   variant="top"
                   src={
                     event.image_url ||
-                    "https://media.istockphoto.com/id/1409304190/photo/embroidered-red-pins-on-a-calendar-event-planner-calendar-clock-to-set-timetable-organize.webp?a=1&b=1&s=612x612&w=0&k=20&c=RWNT_F2DROAeaYwro652G6k5NWBvdRvFND7424nXnd8="
+                    "https://via.placeholder.com/400x250.png?text=Event+Image"
                   }
+                  style={{ height: "180px", objectFit: "cover" }}
                 />
-                <Card.Body>
+                <Card.Body className="d-flex flex-column">
                   <Card.Title>{event.title}</Card.Title>
-                  <Card.Text>{event.description}</Card.Text>
-                  <Card.Text>
-                    <strong>Date:</strong>{" "}
-                    {new Date(event.event_date).toLocaleDateString()}
+                  <Card.Text className="text-muted small">
+                    {new Date(event.event_date).toLocaleDateString()} at{" "}
+                    {event.location}
                   </Card.Text>
-                  <Card.Text>
-                    <strong>Location:</strong> {event.location}
+                  <Card.Text style={{ flexGrow: 1, fontSize: "0.9rem" }}>
+                    {event.description.substring(0, 100)}...
                   </Card.Text>
                   <Button
                     variant="primary"
+                    className="mt-auto"
                     onClick={() => handleBook(event.id, event.title)}
                   >
                     Book Now
@@ -127,7 +121,7 @@ export default function EventsPage() {
             </Col>
           ))
         ) : (
-          <p>Loading the upcoming events...</p>
+          <p>No upcoming events found. Check back soon!</p>
         )}
       </Row>
     </Container>

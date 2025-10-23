@@ -1,3 +1,5 @@
+// src/pages/MyBookingsPage.jsx - FINAL REFACTORED VERSION
+
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -11,9 +13,10 @@ import {
   Form,
 } from "react-bootstrap";
 import { UserContext } from "../contexts/UserContext.jsx";
+import { EVENTS_API_URL } from "../apiConfig"; // Use our config file
 
 export default function MyBookingsPage() {
-  const { user, authToken } = useContext(UserContext);
+  const { user } = useContext(UserContext);
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,19 +24,13 @@ export default function MyBookingsPage() {
   const [editingBooking, setEditingBooking] = useState(null);
 
   useEffect(() => {
-    if (!authToken) {
-      navigate("/");
-    }
-  }, [authToken, navigate]);
-
-  useEffect(() => {
     const fetchBookings = async () => {
       if (!user) return;
       setLoading(true);
       try {
-        const apiUrl =
-          "https://b37d9196-e0d4-4aa4-9d08-56491faf01a1-00-zcuh3tm471ep.sisko.replit.dev";
-        const response = await fetch(`${apiUrl}/api/users/${user.id}/bookings`);
+        const response = await fetch(
+          `${EVENTS_API_URL}/api/users/${user.id}/bookings`
+        );
         const data = await response.json();
         setBookings(data);
       } catch (error) {
@@ -59,14 +56,12 @@ export default function MyBookingsPage() {
     e.preventDefault();
     if (!editingBooking) return;
     try {
-      const apiUrl =
-        "https://b37d9196-e0d4-4aa4-9d08-56491faf01a1-00-zcuh3tm471ep.sisko.replit.dev";
       const updatedData = {
         number_of_tickets: editingBooking.number_of_tickets,
         notes: editingBooking.notes,
       };
       const response = await fetch(
-        `${apiUrl}/api/bookings/${editingBooking.booking_id}`,
+        `${EVENTS_API_URL}/api/bookings/${editingBooking.booking_id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -75,17 +70,11 @@ export default function MyBookingsPage() {
       );
 
       if (response.ok) {
-        alert("Booking updated successfully!");
-        const updatedBookingFromServer = await response.json();
-
+        const updatedBooking = await response.json();
         setBookings(
           bookings.map((b) =>
             b.booking_id === editingBooking.booking_id
-              ? {
-                  ...b,
-                  number_of_tickets: updatedBookingFromServer.number_of_tickets,
-                  notes: updatedBookingFromServer.notes,
-                }
+              ? { ...b, ...updatedBooking }
               : b
           )
         );
@@ -96,20 +85,19 @@ export default function MyBookingsPage() {
       }
     } catch (error) {
       console.error("Error updating booking:", error);
-      alert("An error occurred while updating.");
     }
   };
 
   const handleCancel = async (bookingId) => {
-    if (window.confirm("Are you sure you want to cancel this booking?😒")) {
+    if (window.confirm("Are you sure you want to cancel this booking?")) {
       try {
-        const apiUrl =
-          "https://b37d9196-e0d4-4aa4-9d08-56491faf01a1-00-zcuh3tm471ep.sisko.replit.dev";
-        const response = await fetch(`${apiUrl}/api/bookings/${bookingId}`, {
-          method: "DELETE",
-        });
+        const response = await fetch(
+          `${EVENTS_API_URL}/api/bookings/${bookingId}`,
+          {
+            method: "DELETE",
+          }
+        );
         if (response.ok) {
-          alert("Booking cancelled successfully.");
           setBookings(bookings.filter((b) => b.booking_id !== bookingId));
         } else {
           const errorData = await response.json();
@@ -117,7 +105,6 @@ export default function MyBookingsPage() {
         }
       } catch (error) {
         console.error("Error cancelling booking:", error);
-        alert("An error occurred. Please try again.");
       }
     }
   };
@@ -126,7 +113,7 @@ export default function MyBookingsPage() {
     return (
       <Container className="text-center mt-5">
         <Spinner animation="border" />
-        <p>Hold on i am loading your bookings for you...</p>
+        <p>Loading your bookings...</p>
       </Container>
     );
   }
@@ -140,9 +127,9 @@ export default function MyBookingsPage() {
         <Col className="text-end">
           <Button
             variant="outline-secondary"
-            onClick={() => navigate("/events")}
+            onClick={() => navigate("/dashboard")}
           >
-            Browse Events
+            Back to Dashboard
           </Button>
         </Col>
       </Row>
@@ -159,9 +146,6 @@ export default function MyBookingsPage() {
                     {new Date(booking.event_date).toLocaleDateString()}
                   </Card.Text>
                   <Card.Text>
-                    <strong>Location:</strong> {booking.location}
-                  </Card.Text>
-                  <Card.Text>
                     <strong>Tickets:</strong> {booking.number_of_tickets}
                   </Card.Text>
                   <Card.Text>
@@ -174,6 +158,7 @@ export default function MyBookingsPage() {
                   >
                     Edit
                   </Button>
+                  {/* THIS BUTTON NOW CORRECTLY CALLS handleCancel */}
                   <Button
                     variant="danger"
                     onClick={() => handleCancel(booking.booking_id)}
@@ -185,7 +170,7 @@ export default function MyBookingsPage() {
             </Col>
           ))
         ) : (
-          <p>You have no bookings yet. go check some fun events bro </p>
+          <p>You have no bookings yet. Go explore some events!</p>
         )}
       </Row>
 
@@ -210,7 +195,6 @@ export default function MyBookingsPage() {
                   }
                 />
               </Form.Group>
-
               <Form.Group className="mb-3">
                 <Form.Label>Notes</Form.Label>
                 <Form.Control
@@ -225,7 +209,6 @@ export default function MyBookingsPage() {
                   }
                 />
               </Form.Group>
-
               <Button variant="primary" type="submit">
                 Save Changes
               </Button>
@@ -234,7 +217,7 @@ export default function MyBookingsPage() {
                 onClick={handleCloseEditModal}
                 className="ms-2"
               >
-                Cancel
+                Close
               </Button>
             </Form>
           )}

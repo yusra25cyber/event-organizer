@@ -1,15 +1,17 @@
+// src/pages/AuthPage.jsx - FINAL REFACTORED VERSION
+
 import { Button, Col, Image, Row, Modal, Form } from "react-bootstrap";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import useLocalStorage from "use-local-storage";
 import { useNavigate } from "react-router-dom";
+import { AUTH_API_URL } from "../apiConfig"; // Use our config file
 
 export default function AuthPage() {
   const loginImage =
     "https://media.istockphoto.com/id/1448698612/photo/diversity-hands-and-team-above-in-support-trust-and-unity-for-collaboration-agreement-or.jpg?s=612x612&w=0&k=20&c=gGqdVAEvyopmhqELxQ1tgrqXZkCmHWi5nCleGGDuHJU=";
 
-  const url =
-    "https://8da55a4c-73b5-4dd5-93de-db81d8c45267-00-1ypb5wu3v6hea.pike.replit.dev";
+  // The hardcoded 'url' is now gone, replaced by AUTH_API_URL
 
   const [modalShow, setModalShow] = useState(null);
   const handleShowSignUp = () => setModalShow("SignUp");
@@ -31,14 +33,13 @@ export default function AuthPage() {
   const handleSignUp = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${url}/signup`, {
+      const res = await axios.post(`${AUTH_API_URL}/signup`, {
         username,
         email,
         phone_number,
         password,
       });
       console.log(res.data);
-
       handleLogin(e, true);
     } catch (error) {
       console.error(error);
@@ -48,7 +49,10 @@ export default function AuthPage() {
   const handleLogin = async (e, isAfterSignup = false) => {
     if (!isAfterSignup) e.preventDefault();
     try {
-      const res = await axios.post(`${url}/login`, { username, password });
+      const res = await axios.post(`${AUTH_API_URL}/login`, {
+        username,
+        password,
+      });
       if (res.data && res.data.auth === true && res.data.token) {
         setAuthToken(res.data.token);
         console.log("Login was successful, token saved");
@@ -60,6 +64,7 @@ export default function AuthPage() {
 
   const handleClose = () => setModalShow(null);
 
+  // The rest of your JSX remains exactly the same
   return (
     <Row>
       <Col sm={7}>
@@ -70,7 +75,6 @@ export default function AuthPage() {
           className="bi bi-calendar-event"
           style={{ fontSize: 50, color: "dodgerblue" }}
         ></i>
-
         <p className="mt-5" style={{ fontSize: 64 }}>
           Gather. Connect. Experience.
         </p>
@@ -82,10 +86,8 @@ export default function AuthPage() {
             Create an account
           </Button>
           <p style={{ fontSize: "12px" }}>
-            By signing up???????????? you agree to the Terms of Service and
-            Privacy Policy.
+            By signing up, you agree to the Terms of Service and Privacy Policy.
           </p>
-
           <p className="mt-5" style={{ fontWeight: "bold" }}>
             Already have an account?
           </p>
@@ -120,7 +122,6 @@ export default function AuthPage() {
                   placeholder="Enter username"
                 />
               </Form.Group>
-
               {modalShow === "SignUp" && (
                 <>
                   <Form.Group className="mb-3">
@@ -139,7 +140,6 @@ export default function AuthPage() {
                   </Form.Group>
                 </>
               )}
-
               <Form.Group className="mb-3">
                 <Form.Control
                   onChange={(e) => setPassword(e.target.value)}
@@ -147,7 +147,6 @@ export default function AuthPage() {
                   placeholder="Password"
                 />
               </Form.Group>
-
               <Button className="rounded-pill" type="submit">
                 {modalShow === "SignUp" ? "Sign up" : "Log in"}
               </Button>

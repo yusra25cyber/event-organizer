@@ -1,8 +1,12 @@
+// src/pages/HomePage.jsx - FINAL CONSOLIDATED VERSION
+
 import { Container, Row, Col, Button, Card } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useContext } from "react";
 import { UserContext } from "../contexts/UserContext";
+import { EVENTS_API_URL } from "../apiConfig";
 
+// --- Main HomePage Component ---
 export default function HomePage() {
   const { user } = useContext(UserContext);
   const username = user?.username || "Superstar";
@@ -18,8 +22,10 @@ export default function HomePage() {
   );
 }
 
+// --- Sub-component: HeroSection ---
 function HeroSection({ username }) {
   const avatarUrl = `https://api.dicebear.com/8.x/thumbs/svg?seed=${username}`;
+
   return (
     <div
       className="p-5 text-white bg-dark"
@@ -51,15 +57,62 @@ function HeroSection({ username }) {
               Your mission control for creating unforgettable experiences.
             </p>
           </Col>
+          <Col md="auto" className="ms-auto">
+            <Link to="/logout">
+              <Button variant="outline-light">
+                <i className="bi bi-box-arrow-right me-2"></i>Logout
+              </Button>
+            </Link>
+          </Col>
         </Row>
       </Container>
     </div>
   );
 }
 
+// --- Sub-component: MainGrid (Data-Driven with Correct Links) ---
 function MainGrid() {
-  const myBookingsCount = 0; // Placeholder
-  const myHostedEventsCount = 0; // Placeholder
+  const { user } = useContext(UserContext);
+  const [hostedEventsCount, setHostedEventsCount] = useState(0);
+  const [bookingsCount, setBookingsCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [hostedEventsResponse, bookingsResponse] = await Promise.all([
+          fetch(`${EVENTS_API_URL}/api/users/${user.id}/events`),
+          fetch(`${EVENTS_API_URL}/api/users/${user.id}/bookings`),
+        ]);
+
+        if (hostedEventsResponse.ok) {
+          const hostedEvents = await hostedEventsResponse.json();
+          setHostedEventsCount(hostedEvents.length);
+        }
+
+        if (bookingsResponse.ok) {
+          const bookings = await bookingsResponse.json();
+          setBookingsCount(bookings.length);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
+
+  if (isLoading) {
+    return <p className="text-center py-5">Loading your mission control...</p>;
+  }
 
   return (
     <Row xs={1} md={2} lg={4} className="g-4">
@@ -84,20 +137,21 @@ function MainGrid() {
         />
       </Col>
       <Col>
+        {/* THIS IS THE CORRECTED CARD */}
         <ActionCard
           icon="bi-calendar-heart"
           title="My Creator Hub"
-          text={`Manage your ${myHostedEventsCount} hosted events.`}
+          text={`Manage your ${hostedEventsCount} hosted events.`}
           buttonText="Go to Hub"
           buttonVariant="success"
-          linkTo="/creator-hub"
+          linkTo="/creator-hub" // CORRECT LINK
         />
       </Col>
       <Col>
         <ActionCard
           icon="bi-ticket-perforated"
           title="My Bookings"
-          text={`You have ${myBookingsCount} upcoming bookings.`}
+          text={`You have ${bookingsCount} upcoming bookings.`}
           buttonText="View Bookings"
           buttonVariant="info"
           linkTo="/my-bookings"
@@ -107,6 +161,7 @@ function MainGrid() {
   );
 }
 
+// --- Reusable Component: ActionCard ---
 function ActionCard({ icon, title, text, buttonText, buttonVariant, linkTo }) {
   return (
     <Card className="h-100 text-center shadow-sm">
@@ -127,6 +182,7 @@ function ActionCard({ icon, title, text, buttonText, buttonVariant, linkTo }) {
   );
 }
 
+// --- Sub-component: FooterBar ---
 function FooterBar() {
   const [quote, setQuote] = useState("Loading inspiration...");
 
