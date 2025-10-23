@@ -1,4 +1,4 @@
-// App.jsx
+// App.jsx - FINAL ROUTER
 
 import {
   BrowserRouter,
@@ -8,37 +8,40 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useContext } from "react";
-import UserProvider, { UserContext } from "./contexts/UserContext"; // Import both
+import UserProvider, { UserContext } from "./contexts/UserContext";
+
+// Import Pages
 import AuthPage from "./pages/AuthPage";
+import HomePage from "./pages/HomePage";
 import EventsPage from "./pages/EventsPage";
 import MyBookingsPage from "./pages/MyBookingsPage";
-import HomePage from "./pages/HomePage"; // Import your new HomePage
+import CreateEventPage from "./pages/CreateEventPage";
+import CreatorHubPage from "./pages/CreatorHubPage";
 
-// This component protects routes that require a logged-in user
+// Gatekeeper for protected routes
 function ProtectedRoutes() {
   const { authToken } = useContext(UserContext);
-  // If there's no token, redirect to the login page
   return authToken ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
 export default function App() {
   return (
-    // STEP 1: Wrap the entire app in UserProvider
     <UserProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Route: Anyone can see the login page */}
+          {/* Public */}
           <Route path="/login" element={<AuthPage />} />
 
-          {/* Protected Routes: Only logged-in users can access these */}
+          {/* Protected */}
           <Route element={<ProtectedRoutes />}>
             <Route path="/dashboard" element={<HomePage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/my-bookings" element={<MyBookingsPage />} />
-            {/* Add other protected routes here, like creating an event */}
+            <Route path="/create-event" element={<CreateEventPage />} />
+            <Route path="/creator-hub" element={<CreatorHubPage />} />
           </Route>
 
-          {/* Fallback Route: If no other path matches, go to login */}
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

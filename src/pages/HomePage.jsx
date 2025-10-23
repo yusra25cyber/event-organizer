@@ -1,88 +1,156 @@
-import { Container, Row, Col, Button } from "react-bootstrap";
+import { Container, Row, Col, Button, Card } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useContext } from "react";
-import { UserContext } from "../contexts/UserContext"; // Make sure this path is correct
+import { UserContext } from "../contexts/UserContext";
 
 export default function HomePage() {
-  const [quote, setQuote] = useState("Loading your daily spark...");
-  const { user } = useContext(UserContext); // Get the user from context
+  const { user } = useContext(UserContext);
+  const username = user?.username || "Superstar";
 
-  // Use the username from the decoded token, with a fallback
-  const username = user?.username || "there";
+  return (
+    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
+      <HeroSection username={username} />
+      <Container className="py-5">
+        <MainGrid />
+      </Container>
+      <FooterBar />
+    </div>
+  );
+}
 
-  // Fetch quote on load - This is already correctly set up
+function HeroSection({ username }) {
+  const avatarUrl = `https://api.dicebear.com/8.x/thumbs/svg?seed=${username}`;
+  return (
+    <div
+      className="p-5 text-white bg-dark"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(https://images.unsplash.com/photo-1505238680356-667803448bb6?q=80&w=2070&auto=format&fit=crop)`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        borderRadius: "0 0 1rem 1rem",
+      }}
+    >
+      <Container>
+        <Row className="align-items-center">
+          <Col md="auto">
+            <img
+              src={avatarUrl}
+              alt="User Avatar"
+              style={{
+                width: "80px",
+                height: "80px",
+                borderRadius: "50%",
+                border: "3px solid white",
+                backgroundColor: "#fff",
+              }}
+            />
+          </Col>
+          <Col>
+            <h1 className="display-4">Welcome back, {username}.</h1>
+            <p className="lead">
+              Your mission control for creating unforgettable experiences.
+            </p>
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  );
+}
+
+function MainGrid() {
+  const myBookingsCount = 0; // Placeholder
+  const myHostedEventsCount = 0; // Placeholder
+
+  return (
+    <Row xs={1} md={2} lg={4} className="g-4">
+      <Col>
+        <ActionCard
+          icon="bi-search-heart"
+          title="Explore Events"
+          text="Discover and book your next great experience."
+          buttonText="Browse All"
+          buttonVariant="primary"
+          linkTo="/events"
+        />
+      </Col>
+      <Col>
+        <ActionCard
+          icon="bi-plus-circle-dotted"
+          title="Create New Event"
+          text="Have an idea? Bring it to life and invite others."
+          buttonText="Start Building"
+          buttonVariant="outline-primary"
+          linkTo="/create-event"
+        />
+      </Col>
+      <Col>
+        <ActionCard
+          icon="bi-calendar-heart"
+          title="My Creator Hub"
+          text={`Manage your ${myHostedEventsCount} hosted events.`}
+          buttonText="Go to Hub"
+          buttonVariant="success"
+          linkTo="/creator-hub"
+        />
+      </Col>
+      <Col>
+        <ActionCard
+          icon="bi-ticket-perforated"
+          title="My Bookings"
+          text={`You have ${myBookingsCount} upcoming bookings.`}
+          buttonText="View Bookings"
+          buttonVariant="info"
+          linkTo="/my-bookings"
+        />
+      </Col>
+    </Row>
+  );
+}
+
+function ActionCard({ icon, title, text, buttonText, buttonVariant, linkTo }) {
+  return (
+    <Card className="h-100 text-center shadow-sm">
+      <Card.Body className="d-flex flex-column">
+        <i
+          className={`bi ${icon}`}
+          style={{ fontSize: "3rem", color: "#0d6efd" }}
+        ></i>
+        <Card.Title className="mt-3">{title}</Card.Title>
+        <Card.Text className="flex-grow-1">{text}</Card.Text>
+        <Link to={linkTo}>
+          <Button variant={buttonVariant} className="mt-auto">
+            {buttonText}
+          </Button>
+        </Link>
+      </Card.Body>
+    </Card>
+  );
+}
+
+function FooterBar() {
+  const [quote, setQuote] = useState("Loading inspiration...");
+
   useEffect(() => {
-    fetch("https://api.quotable.io/random")
+    fetch("https://api.quotable.io/random?maxLength=100")
       .then((res) => res.json())
-      .then((data) => setQuote(`"${data.content}"\n— ${data.author}`))
-      .catch(() => setQuote("Even quotes take breaks. You don't have to."));
+      .then((data) => setQuote(`${data.content} — ${data.author}`))
+      .catch(() => setQuote("The journey is the reward."));
   }, []);
 
   return (
-    <Container className="py-5" style={{ minHeight: "90vh" }}>
-      {/* Welcome Section */}
-      <Row className="mb-5">
-        <Col md={8}>
-          <h1 className="display-4">👋 Welcome back, {username}!</h1>
-          <p className="lead">This is your space. Your events. Your rules.</p>
-        </Col>
-
-        {/* THIS IS THE MISSING PIECE - The "Today's Spark" card */}
-        <Col
-          md={4}
-          className="d-flex align-items-center justify-content-center"
-        >
-          <div
-            style={{
-              padding: "1.5rem",
-              background: "#f8f9fa",
-              borderRadius: "12px",
-              border: "1px solid #e9ecef",
-            }}
-          >
-            <h5>✨ Today's Spark</h5>
-            <blockquote
-              style={{
-                fontSize: "1rem",
-                fontStyle: "italic",
-                whiteSpace: "pre-line",
-                margin: 0,
-              }}
-            >
-              {quote} {/* We are now using the 'quote' state here */}
-            </blockquote>
-          </div>
-        </Col>
-      </Row>
-
-      {/* Action Buttons - These are already correct */}
-      <Row className="g-4">
-        <Col md={4}>
-          <div className="p-4 border rounded text-center bg-light h-100">
-            <h3>📅 Browse Events</h3>
-            <p>Find new events or book your spot.</p>
-            <Link to="/events">
-              <Button variant="primary" size="lg">
-                Explore Now
-              </Button>
-            </Link>
-          </div>
-        </Col>
-
-        <Col md={4}>
-          <div className="p-4 border rounded text-center bg-light h-100">
-            <h3>🎟️ My Bookings</h3>
-            <p>Manage, edit, or cancel your bookings.</p>
-            <Link to="/my-bookings">
-              <Button variant="success" size="lg">
-                View My Bookings
-              </Button>
-            </Link>
-          </div>
-        </Col>
-
-        {/* We can add another card for "Create Event" later if needed */}
-      </Row>
-    </Container>
+    <div
+      className="fixed-bottom bg-white shadow-lg"
+      style={{ borderTop: "1px solid #e9ecef" }}
+    >
+      <Container className="d-flex justify-content-between align-items-center py-2">
+        <span className="text-primary">
+          <strong>Today's Thought:</strong>{" "}
+          <em className="text-muted">{quote}</em>
+        </span>
+        <Button variant="link">
+          <i className="bi bi-gear" style={{ fontSize: "1.2rem" }}></i>
+        </Button>
+      </Container>
+    </div>
   );
 }
