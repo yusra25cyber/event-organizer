@@ -1,19 +1,28 @@
 import { Container, Row, Col, Button, Card } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom"; // Make sure useNavigate is imported
 import { useEffect, useState, useContext } from "react";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase";
 import { UserContext } from "../contexts/UserContext";
 import { EVENTS_API_URL } from "../apiConfig";
-
+///import { getAuth }  from" firebase/auth"
+import { AuthContext } from "../components/AuthProvider";
 // --- Main HomePage Component ---
+
 export default function HomePage() {
-  const { user, setAuthToken } = useContext(UserContext); // Get user AND setAuthToken
-  const navigate = useNavigate(); // Hook for navigation
+  const { currentUser } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  const username = user?.username || "Superstar";
+  if (!currentUser) {
+    return null;
+  }
 
-  const handleLogout = () => {
-    setAuthToken(null); // This clears the token
-    navigate("/login"); // This redirects to the login page
+  const username =
+    currentUser.displayName || currentUser.email?.split("@")[0] || "Superstar";
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate("/login");
   };
 
   return (
@@ -76,7 +85,10 @@ function HeroSection({ username, onLogout }) {
 
 // --- Sub-component: MainGrid (Data-Driven) ---
 function MainGrid() {
-  const { user } = useContext(UserContext);
+  //const authContext = useContext(AuthContext);
+  //console.log(authContext);
+  const { user } = useContext(AuthContext);
+  // const { currentUser } = useContext(AuthContext);
   const [hostedEventsCount, setHostedEventsCount] = useState(0);
   const [bookingsCount, setBookingsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -198,8 +210,8 @@ function FooterBar() {
       .then((data) => setQuote(`${data.content} — ${data.author}`))
       .catch(() =>
         setQuote(
-          "The only way to do great work is to love what you do. — Steve Jobs"
-        )
+          "The only way to do great work is to love what you do. — Steve Jobs",
+        ),
       );
   }, []);
 

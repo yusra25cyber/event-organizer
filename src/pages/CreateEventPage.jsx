@@ -1,4 +1,6 @@
 // src/pages/CreateEventPage.jsx - FINAL AND COMPLETE
+import { storage } from "../firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +18,10 @@ export default function CreateEventPage() {
   const [eventDate, setEventDate] = useState("");
   const [eventTime, setEventTime] = useState("");
   const [location, setLocation] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [file, setFile] = useState(null); // store selected image
+  //const [imageUrl, setImageUrl] = useState(""); // store uploaded image URL
+
+  // const [imageUrl, setImageUrl] = useState("");
 
   // State for UI feedback
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +40,14 @@ export default function CreateEventPage() {
     setError("");
 
     try {
+      let uploadedImageUrl = "";
+
+      if (file) {
+        const storageRef = ref(storage, `events/${file.name}`);
+        await uploadBytes(storageRef, file); // upload the file
+        uploadedImageUrl = await getDownloadURL(storageRef); // get the public URL
+      }
+
       // Assemble the data payload for the backend
       const eventData = {
         title,
@@ -42,11 +55,10 @@ export default function CreateEventPage() {
         event_date: eventDate,
         event_time: eventTime,
         location,
-        image_url: imageUrl,
-        creator_id: user.id, // This is the crucial ownership link
+        image_url: uploadedImageUrl, // <-- use the uploaded file URL
+        creator_id: user.id,
       };
 
-      // Send the data to your backend API
       const response = await fetch(`${EVENTS_API_URL}/api/events`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,19 +66,17 @@ export default function CreateEventPage() {
       });
 
       if (!response.ok) {
-        // If the server responds with an error, try to parse it
         const errorData = await response.json();
         throw new Error(errorData.error || "An unknown server error occurred.");
       }
 
-      //If successful:
       alert("Event created successfully!");
-      navigate("/creator-hub"); // Redirect to the Creator Hub to see the new event
+      navigate("/creator-hub");
     } catch (serverError) {
       console.error("Server submission error:", serverError);
       setError(serverError.message);
     } finally {
-      setIsLoading(false); //Ensure loading state is turned off, whether it succeeded or failed
+      setIsLoading(false);
     }
   };
 
@@ -141,24 +151,15 @@ export default function CreateEventPage() {
           />
         </Form.Group>
 
-        <Form.Group className="mb-3" controlId="eventImageUrl">
-          <Form.Label>Image URL</Form.Label>
+        <Form.Group className="mb-3" controlId="eventImageFile">
+          <Form.Label>Upload Event Image</Form.Label>
           <Form.Control
-            type="text"
-            placeholder="https://images.unsplash.com/..."
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
+            type="file"
+            onChange={(e) => setFile(e.target.files[0])}
+            accept="image/*"
           />
           <Form.Text className="text-muted">
-            Find an image on{" "}
-            <a
-              href="https://unsplash.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Unsplash
-            </a>{" "}
-            and paste the link here.
+            Upload an image from your device for this event.
           </Form.Text>
         </Form.Group>
 

@@ -14,6 +14,7 @@ import EventsPage from "./pages/EventsPage";
 import MyBookingsPage from "./pages/MyBookingsPage";
 import CreateEventPage from "./pages/CreateEventPage";
 import CreatorHubPage from "./pages/CreatorHubPage";
+import { AuthProvider } from "./components/AuthProvider";
 
 function ProtectedRoutes() {
   const { authToken } = useContext(UserContext);
@@ -22,22 +23,24 @@ function ProtectedRoutes() {
 
 export default function App() {
   return (
-    <UserProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<AuthPage />} />
+    <AuthProvider>
+      <UserProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<AuthPage />} />
 
-          <Route element={<ProtectedRoutes />}>
-            <Route path="/dashboard" element={<HomePage />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/my-bookings" element={<MyBookingsPage />} />
-            <Route path="/create-event" element={<CreateEventPage />} />
-            <Route path="/creator-hub" element={<CreatorHubPage />} />
-          </Route>
+            <Route element={<ProtectedRoutes />}>
+              <Route path="/dashboard" element={<HomePage />} />
+              <Route path="/events" element={<EventsPage />} />
+              <Route path="/my-bookings" element={<MyBookingsPage />} />
+              <Route path="/create-event" element={<CreateEventPage />} />
+              <Route path="/creator-hub" element={<CreatorHubPage />} />
+            </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </UserProvider>
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </UserProvider>
+    </AuthProvider>
   );
 }

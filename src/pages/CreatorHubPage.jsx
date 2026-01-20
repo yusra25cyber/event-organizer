@@ -17,10 +17,12 @@ import { EVENTS_API_URL } from "../apiConfig";
 export default function CreatorHubPage() {
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
+
   const [hostedEvents, setHostedEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Fetch hosted events for the current user
   useEffect(() => {
     if (!user?.id) {
       setIsLoading(false);
@@ -34,19 +36,14 @@ export default function CreatorHubPage() {
         const response = await fetch(
           `${EVENTS_API_URL}/api/users/${user.id}/events`
         );
+
         if (!response.ok) {
           throw new Error("Failed to fetch your events from the server.");
         }
+
         const data = await response.json();
 
-        // This is a defensive check to make sure we always have an array
-        if (Array.isArray(data)) {
-          setHostedEvents(data);
-        } else {
-          // If the API returns something other than an array, we handle it
-          console.error("API did not return an array:", data);
-          setHostedEvents([]);
-        }
+        setHostedEvents(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error fetching hosted events:", err);
         setError(err.message);
@@ -54,18 +51,17 @@ export default function CreatorHubPage() {
         setIsLoading(false);
       }
     };
+
     fetchHostedEvents();
   }, [user]);
 
-  // --- DEFENSIVE FILTERING ---
-  // We will now check if event and event.event_date exist before trying to filter.
-  // This prevents crashes if the data is malformed.
+  // Split events into upcoming and past
   const now = new Date();
   const upcomingEvents = hostedEvents.filter(
-    (event) => event && event.event_date && new Date(event.event_date) >= now
+    (event) => event?.event_date && new Date(event.event_date) >= now
   );
   const pastEvents = hostedEvents.filter(
-    (event) => event && event.event_date && new Date(event.event_date) < now
+    (event) => event?.event_date && new Date(event.event_date) < now
   );
 
   if (isLoading) {
@@ -110,8 +106,10 @@ export default function CreatorHubPage() {
   );
 }
 
-// Reusable component to display a grid of event cards
+// --- EventGrid Component ---
 function EventGrid({ events }) {
+  const navigate = useNavigate();
+
   if (!events || events.length === 0) {
     return (
       <div className="text-center p-5 bg-light rounded">
@@ -119,18 +117,21 @@ function EventGrid({ events }) {
       </div>
     );
   }
+
+  const handleManage = (eventId) => {
+    // Placeholder for future edit functionality
+    navigate(`/edit-event/${eventId}`);
+  };
+
   return (
     <Row>
       {events.map(
         (event) =>
-          // Add another defensive check here
-          event &&
-          event.id && (
-            <Col key={event.id} md={4} lg={3} className="mb-4">
+          event?.id && (
+            <Col key={event.id} md={6} lg={4} className="mb-4">
               <Card className="h-100 shadow-sm">
                 <Card.Img
                   variant="top"
-                  // Check if image_url exists before trying to display it
                   src={event.image_url || "https://via.placeholder.com/400x250"}
                   style={{ height: "180px", objectFit: "cover" }}
                 />
@@ -141,10 +142,14 @@ function EventGrid({ events }) {
                       ? new Date(event.event_date).toLocaleDateString()
                       : "No date"}
                   </Card.Text>
+                  <Card.Text className="text-truncate">
+                    {event.description || "No description provided."}
+                  </Card.Text>
                   <Button
                     variant="outline-primary"
                     size="sm"
                     className="mt-auto"
+                    onClick={() => handleManage(event.id)}
                   >
                     Manage
                   </Button>
