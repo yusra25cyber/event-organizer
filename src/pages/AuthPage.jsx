@@ -1,27 +1,22 @@
-// src/pages/AuthPage.jsx - FINAL REFACTORED VERSION
-
-import { Button, Col, Image, Row, Modal, Form } from "react-bootstrap";
+import { Button, Modal, Form } from "react-bootstrap";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import useLocalStorage from "use-local-storage";
 import { useNavigate } from "react-router-dom";
-import { AUTH_API_URL } from "../apiConfig"; // Use our config file
+import { AUTH_API_URL } from "../apiConfig";
+import { UserContext } from "../contexts/UserContext.jsx";
+import { useContext } from "react";
 
 export default function AuthPage() {
-  const loginImage =
-    "https://media.istockphoto.com/id/1448698612/photo/diversity-hands-and-team-above-in-support-trust-and-unity-for-collaboration-agreement-or.jpg?s=612x612&w=0&k=20&c=gGqdVAEvyopmhqELxQ1tgrqXZkCmHWi5nCleGGDuHJU=";
-
-  // The hardcoded 'url' is now gone, replaced by AUTH_API_URL
-
   const [modalShow, setModalShow] = useState(null);
   const handleShowSignUp = () => setModalShow("SignUp");
   const handleShowLogin = () => setModalShow("Login");
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [phone_number, setPhone_number] = useState("");
-  const [authToken, setAuthToken] = useLocalStorage("authToken", "");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
+  const { authToken, setAuthToken } = useContext(UserContext);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,16 +28,16 @@ export default function AuthPage() {
   const handleSignUp = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${AUTH_API_URL}/signup`, {
+      await axios.post(`${AUTH_API_URL}/signup`, {
         username,
         email,
-        phone_number,
+        phone_number: phoneNumber,
         password,
       });
-      console.log(res.data);
-      handleLogin(e, true);
+
+      await handleLogin(e, true);
     } catch (error) {
-      console.error(error);
+      console.error("Signup Error:", error);
     }
   };
 
@@ -53,107 +48,113 @@ export default function AuthPage() {
         username,
         password,
       });
-      if (res.data && res.data.auth === true && res.data.token) {
+      if (res.data?.auth && res.data?.token) {
         setAuthToken(res.data.token);
-        console.log("Login was successful, token saved");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Login Error:", error);
     }
   };
 
   const handleClose = () => setModalShow(null);
 
-  // The rest of your JSX remains exactly the same
   return (
-    <Row>
-      <Col sm={7}>
-        <Image height="800px" src={loginImage} fluid />
-      </Col>
-      <Col sm={5} className="p-4">
+    <div
+      style={{
+        height: "100vh",
+        width: "100vw",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(https://images.unsplash.com/photo-1519638399535-1b036603ac77?q=80&w=1931&auto=format&fit=crop)`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div
+        className="text-center text-white p-5"
+        style={{
+          backgroundColor: "rgba(0, 0, 0, 0.3)",
+          backdropFilter: "blur(10px)",
+          borderRadius: "1rem",
+          maxWidth: "500px",
+        }}
+      >
         <i
-          className="bi bi-calendar-event"
-          style={{ fontSize: 50, color: "dodgerblue" }}
+          className="bi bi-calendar2-heart-fill"
+          style={{ fontSize: "4rem", color: "#fff" }}
         ></i>
-        <p className="mt-5" style={{ fontSize: 64 }}>
-          Gather. Connect. Experience.
+        <h1 className="display-4 my-4">Eventide</h1>
+        <p className="lead mb-5">
+          Your portal to unforgettable experiences. Create, discover, and
+          connect.
         </p>
-        <h2 className="my-5" style={{ fontSize: 31 }}>
-          Book your next experience today.
-        </h2>
-        <Col sm={5} className="d-grid gap-2">
-          <Button className="rounded-pill" onClick={handleShowSignUp}>
-            Create an account
+        <div className="d-grid gap-2">
+          <Button size="lg" className="rounded-pill" onClick={handleShowSignUp}>
+            Get Started
           </Button>
-          <p style={{ fontSize: "12px" }}>
-            By signing up, you agree to the Terms of Service and Privacy Policy.
-          </p>
-          <p className="mt-5" style={{ fontWeight: "bold" }}>
-            Already have an account?
-          </p>
           <Button
-            className="rounded-pill"
-            variant="outline-primary"
+            variant="link"
+            className="text-white-50"
             onClick={handleShowLogin}
           >
-            Sign in
+            Already have an account? Sign In
           </Button>
-        </Col>
-        <Modal
-          show={modalShow !== null}
-          onHide={handleClose}
-          animation={false}
-          centered
-        >
-          <Modal.Body>
-            <h2 className="mb-4" style={{ fontWeight: "bold" }}>
-              {modalShow === "SignUp"
-                ? "Create your account"
-                : "Log in to your account"}
-            </h2>
-            <Form
-              className="d-grid gap-2 px-5"
-              onSubmit={modalShow === "SignUp" ? handleSignUp : handleLogin}
-            >
-              <Form.Group className="mb-3">
-                <Form.Control
-                  onChange={(e) => setUsername(e.target.value)}
-                  type="text"
-                  placeholder="Enter username"
-                />
-              </Form.Group>
-              {modalShow === "SignUp" && (
-                <>
-                  <Form.Group className="mb-3">
-                    <Form.Control
-                      onChange={(e) => setEmail(e.target.value)}
-                      type="email"
-                      placeholder="Enter email"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Control
-                      onChange={(e) => setPhone_number(e.target.value)}
-                      type="text"
-                      placeholder="Enter phone number"
-                    />
-                  </Form.Group>
-                </>
-              )}
-              <Form.Group className="mb-3">
-                <Form.Control
-                  onChange={(e) => setPassword(e.target.value)}
-                  type="password"
-                  placeholder="Password"
-                />
-              </Form.Group>
-              <Button className="rounded-pill" type="submit">
-                {modalShow === "SignUp" ? "Sign up" : "Log in"}
-              </Button>
-            </Form>
-          </Modal.Body>
-        </Modal>
-      </Col>
-    </Row>
+        </div>
+      </div>
+
+      <Modal show={modalShow !== null} onHide={handleClose} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {modalShow === "SignUp" ? "Create Your Account" : "Welcome Back"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form
+            className="d-grid gap-2"
+            onSubmit={modalShow === "SignUp" ? handleSignUp : handleLogin}
+          >
+            <Form.Group>
+              <Form.Label>Username</Form.Label>
+              <Form.Control
+                onChange={(e) => setUsername(e.target.value)}
+                type="text"
+                required
+              />
+            </Form.Group>
+            {modalShow === "SignUp" && (
+              <>
+                <Form.Group>
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    required
+                  />
+                </Form.Group>
+                <Form.Group>
+                  <Form.Label>Phone Number</Form.Label>
+                  <Form.Control
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    type="tel"
+                  />
+                </Form.Group>
+              </>
+            )}
+            <Form.Group>
+              <Form.Label>Password</Form.Label>
+              <Form.Control
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                required
+              />
+            </Form.Group>
+            <Button className="rounded-pill mt-3" type="submit">
+              {modalShow === "SignUp" ? "Sign Up" : "Log In"}
+            </Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
+    </div>
   );
 }

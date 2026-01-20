@@ -1,4 +1,3 @@
-// src/pages/CompletedEventsPage.jsx
 import { Container } from "react-bootstrap";
 
 export default function CompletedEventsPage() {

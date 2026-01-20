@@ -59,14 +59,14 @@ export default function CreateEventPage() {
         throw new Error(errorData.error || "An unknown server error occurred.");
       }
 
-      // If successful:
+      //If successful:
       alert("Event created successfully!");
       navigate("/creator-hub"); // Redirect to the Creator Hub to see the new event
     } catch (serverError) {
       console.error("Server submission error:", serverError);
       setError(serverError.message);
     } finally {
-      setIsLoading(false); // Ensure loading state is turned off, whether it succeeded or failed
+      setIsLoading(false); //Ensure loading state is turned off, whether it succeeded or failed
     }
   };
 

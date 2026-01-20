@@ -1,19 +1,24 @@
-// src/pages/HomePage.jsx - FINAL CONSOLIDATED VERSION
-
 import { Container, Row, Col, Button, Card } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Make sure useNavigate is imported
 import { useEffect, useState, useContext } from "react";
 import { UserContext } from "../contexts/UserContext";
 import { EVENTS_API_URL } from "../apiConfig";
 
 // --- Main HomePage Component ---
 export default function HomePage() {
-  const { user } = useContext(UserContext);
+  const { user, setAuthToken } = useContext(UserContext); // Get user AND setAuthToken
+  const navigate = useNavigate(); // Hook for navigation
+
   const username = user?.username || "Superstar";
+
+  const handleLogout = () => {
+    setAuthToken(null); // This clears the token
+    navigate("/login"); // This redirects to the login page
+  };
 
   return (
     <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
-      <HeroSection username={username} />
+      <HeroSection username={username} onLogout={handleLogout} />
       <Container className="py-5">
         <MainGrid />
       </Container>
@@ -22,8 +27,8 @@ export default function HomePage() {
   );
 }
 
-// --- Sub-component: HeroSection ---
-function HeroSection({ username }) {
+// --- Sub-component: HeroSection (Accepts onLogout prop) ---
+function HeroSection({ username, onLogout }) {
   const avatarUrl = `https://api.dicebear.com/8.x/thumbs/svg?seed=${username}`;
 
   return (
@@ -58,11 +63,10 @@ function HeroSection({ username }) {
             </p>
           </Col>
           <Col md="auto" className="ms-auto">
-            <Link to="/logout">
-              <Button variant="outline-light">
-                <i className="bi bi-box-arrow-right me-2"></i>Logout
-              </Button>
-            </Link>
+            {/* This is now a button that calls the onLogout function */}
+            <Button variant="outline-light" onClick={onLogout}>
+              <i className="bi bi-box-arrow-right me-2"></i>Logout
+            </Button>
           </Col>
         </Row>
       </Container>
@@ -70,7 +74,7 @@ function HeroSection({ username }) {
   );
 }
 
-// --- Sub-component: MainGrid (Data-Driven with Correct Links) ---
+// --- Sub-component: MainGrid (Data-Driven) ---
 function MainGrid() {
   const { user } = useContext(UserContext);
   const [hostedEventsCount, setHostedEventsCount] = useState(0);
@@ -137,14 +141,13 @@ function MainGrid() {
         />
       </Col>
       <Col>
-        {/* THIS IS THE CORRECTED CARD */}
         <ActionCard
           icon="bi-calendar-heart"
           title="My Creator Hub"
-          text={`Manage your ${hostedEventsCount} hosted events.`}
+          text={`You are hosting ${hostedEventsCount} events.`}
           buttonText="Go to Hub"
           buttonVariant="success"
-          linkTo="/creator-hub" // CORRECT LINK
+          linkTo="/creator-hub"
         />
       </Col>
       <Col>
@@ -188,9 +191,16 @@ function FooterBar() {
 
   useEffect(() => {
     fetch("https://api.quotable.io/random?maxLength=100")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("API not available");
+        return res.json();
+      })
       .then((data) => setQuote(`${data.content} — ${data.author}`))
-      .catch(() => setQuote("The journey is the reward."));
+      .catch(() =>
+        setQuote(
+          "The only way to do great work is to love what you do. — Steve Jobs"
+        )
+      );
   }, []);
 
   return (

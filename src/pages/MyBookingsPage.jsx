@@ -1,5 +1,3 @@
-// src/pages/MyBookingsPage.jsx - FINAL REFACTORED VERSION
-
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,7 +11,7 @@ import {
   Form,
 } from "react-bootstrap";
 import { UserContext } from "../contexts/UserContext.jsx";
-import { EVENTS_API_URL } from "../apiConfig"; // Use our config file
+import { EVENTS_API_URL } from "../apiConfig";
 
 export default function MyBookingsPage() {
   const { user } = useContext(UserContext);
@@ -158,7 +156,7 @@ export default function MyBookingsPage() {
                   >
                     Edit
                   </Button>
-                  {/* THIS BUTTON NOW CORRECTLY CALLS handleCancel */}
+
                   <Button
                     variant="danger"
                     onClick={() => handleCancel(booking.booking_id)}
