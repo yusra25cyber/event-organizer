@@ -3,12 +3,26 @@ import { Navbar, Container, Nav, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../contexts/UserContext";
 
+// 1. IMPORT FIREBASE AUTH FUNCTIONS
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase";
+
 export default function NavBar() {
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
 
-  const handleLogout = () => {
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      console.log("Attempting to log out...");
+      // 2. ACTUALLY SIGN OUT FROM FIREBASE
+      await signOut(auth);
+      console.log("Sign out successful!");
+
+      // 3. GO TO LOGIN PAGE
+      navigate("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   return (
@@ -28,24 +42,26 @@ export default function NavBar() {
         <Navbar.Toggle aria-controls="basic-navbar-nav" variant="dark" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto align-items-center gap-3">
-            <Button className="nav-btn" onClick={() => navigate("/dashboard")}>
+            <button className="nav-btn" onClick={() => navigate("/dashboard")}>
               Home
-            </Button>
-            <Button className="nav-btn" onClick={() => navigate("/events")}>
+            </button>
+            <button className="nav-btn" onClick={() => navigate("/events")}>
               Explore
-            </Button>
-            <Button
+            </button>
+            <button
               className="nav-btn"
               onClick={() => navigate("/creator-hub")}
             >
               Creator Hub
-            </Button>
-            <Button
+            </button>
+            <button
               className="nav-btn"
               onClick={() => navigate("/my-bookings")}
             >
               My Bookings
-            </Button>
+            </button>
+
+            {/* LOGOUT BUTTON */}
             <Button
               variant="outline-danger"
               size="sm"

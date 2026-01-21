@@ -1,168 +1,151 @@
-import { Button, Modal, Form } from "react-bootstrap";
-import { useState, useEffect, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Container, Card, Form, Button, Alert } from "react-bootstrap";
+// 1. IMPORT FIREBASE FUNCTIONS
 import {
-  GoogleAuthProvider,
   signInWithPopup,
+  GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { auth } from "../firebase";
-import { AuthContext } from "../components/AuthProvider";
+import { UserContext } from "../contexts/UserContext";
 
 export default function AuthPage() {
-  const [modalShow, setModalShow] = useState(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
   const navigate = useNavigate();
-  const { currentUser } = useContext(AuthContext);
-
-  const googleProvider = new GoogleAuthProvider();
+  const { user } = useContext(UserContext);
 
   // Redirect if already logged in
   useEffect(() => {
-    if (currentUser) {
+    if (user) {
       navigate("/dashboard");
     }
-  }, [currentUser, navigate]);
+  }, [user, navigate]);
 
-  // Email + password signup
-  const handleSignUp = async (e) => {
-    e.preventDefault();
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // --- GOOGLE LOGIN ---
+  const handleGoogleLogin = async () => {
+    setError("");
+    setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      setModalShow(null);
-    } catch (error) {
-      console.error("Signup Error:", error.message);
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      // Navigation happens automatically via useEffect above
+    } catch (err) {
+      console.error(err);
+      setError("Google Sign In Failed.");
+      setLoading(false);
     }
   };
 
-  // Email + password login
-  const handleLogin = async (e) => {
+  // --- EMAIL LOGIN ---
+  const handleEmailAuth = async (e) => {
     e.preventDefault();
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      setModalShow(null);
-    } catch (error) {
-      console.error("Login Error:", error.message);
-    }
-  };
+    setError("");
+    setLoading(true);
 
-  // Google sign-in
-  const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      setModalShow(null);
-    } catch (error) {
-      console.error("Google Sign-in Error:", error.message);
+      if (isLogin) {
+        // Log In
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        // Sign Up
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+      // Navigation happens automatically via useEffect above
+    } catch (err) {
+      console.error(err);
+      if (err.code === "auth/email-already-in-use")
+        setError("Email already used.");
+      else if (err.code === "auth/wrong-password") setError("Wrong password.");
+      else if (err.code === "auth/user-not-found") setError("User not found.");
+      else if (err.code === "auth/weak-password")
+        setError("Password too weak.");
+      else setError(err.message);
+      setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundImage: `
-          linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-          url(https://images.unsplash.com/photo-1517248135467-4c7edcad34c4)
-        `,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
+    <Container
+      className="d-flex align-items-center justify-content-center"
+      style={{ minHeight: "100vh" }}
     >
-      {/* Glass Card */}
-      <div
-        style={{
-          background: "rgba(255, 255, 255, 0.15)",
-          backdropFilter: "blur(12px)",
-          padding: "3rem",
-          borderRadius: "1rem",
-          textAlign: "center",
-          color: "white",
-          width: "340px",
-        }}
+      <Card
+        className="p-4 shadow-lg bg-mocha"
+        style={{ maxWidth: "450px", width: "100%" }}
       >
-        <h1 className="mb-4">Eventide</h1>
-        <p className="mb-4 text-white-50">
-          Create, discover, and manage unforgettable events.
-        </p>
+        <Card.Body>
+          <div className="text-center mb-4">
+            <h2 className="fw-bold" style={{ color: "#ffecb3" }}>
+              {isLogin ? "Welcome Back" : "Join EventBooker"}
+            </h2>
+          </div>
 
-        <Button
-          size="lg"
-          className="w-100 mb-3"
-          onClick={() => setModalShow("signup")}
-        >
-          Get Started
-        </Button>
+          {error && <Alert variant="danger">{error}</Alert>}
 
-        <Button
-          variant="link"
-          className="text-white-50"
-          onClick={() => setModalShow("login")}
-        >
-          Already have an account? Sign In
-        </Button>
-      </div>
-
-      {/* Modal */}
-      <Modal
-        show={modalShow !== null}
-        onHide={() => setModalShow(null)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {modalShow === "signup" ? "Create Account" : "Welcome Back"}
-          </Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          {/* Google Sign-in */}
-          <Button
-            variant="outline-dark"
-            className="w-100 mb-3 d-flex align-items-center justify-content-center"
-            onClick={handleGoogleSignIn}
-          >
-            <img
-              src="https://developers.google.com/identity/images/g-logo.png"
-              alt="Google"
-              style={{ width: "18px", marginRight: "10px" }}
-            />
-            Continue with Google
-          </Button>
-
-          <hr />
-
-          {/* Email Form */}
-          <Form onSubmit={modalShow === "signup" ? handleSignUp : handleLogin}>
+          <Form onSubmit={handleEmailAuth}>
             <Form.Group className="mb-3">
-              <Form.Label>Email</Form.Label>
+              <Form.Label style={{ color: "#d7ccc8" }}>
+                Email Address
+              </Form.Label>
               <Form.Control
                 type="email"
+                value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Password</Form.Label>
+            <Form.Group className="mb-4">
+              <Form.Label style={{ color: "#d7ccc8" }}>Password</Form.Label>
               <Form.Control
                 type="password"
+                value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </Form.Group>
 
-            <Button type="submit" className="w-100">
-              {modalShow === "signup" ? "Sign Up" : "Log In"}
+            <Button
+              className="btn-luxury w-100 mb-3"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Processing..." : isLogin ? "Log In" : "Sign Up"}
             </Button>
           </Form>
-        </Modal.Body>
-      </Modal>
-    </div>
+
+          <div className="text-center text-white-50 mb-3">— OR —</div>
+
+          <Button
+            variant="light"
+            className="w-100 mb-3"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+          >
+            Sign in with Google
+          </Button>
+
+          <div className="text-center">
+            <span
+              style={{
+                color: "#ffecb3",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
+              onClick={() => setIsLogin(!isLogin)}
+            >
+              {isLogin ? "Need an account? Sign Up" : "Have an account? Log In"}
+            </span>
+          </div>
+        </Card.Body>
+      </Card>
+    </Container>
   );
 }

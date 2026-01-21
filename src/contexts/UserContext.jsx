@@ -1,35 +1,27 @@
 import React, { createContext, useState, useEffect } from "react";
-import useLocalStorage from "use-local-storage";
-import { jwtDecode } from "jwt-decode";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 
 export const UserContext = createContext();
 
 export default function UserProvider({ children }) {
-  const [authToken, setAuthToken] = useLocalStorage("authToken", null);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authToken) {
-      try {
-        const decodedToken = jwtDecode(authToken);
-        setUser(decodedToken);
-      } catch (error) {
-        console.error("Error decoding token:", error);
-        setAuthToken(null);
-        setUser(null);
-      }
-    } else {
-      setUser(null);
-    }
-  }, [authToken, setAuthToken]);
+    // This listens for Firebase changes automatically
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log("Auth State Changed:", currentUser?.email);
+      setUser(currentUser);
+      setLoading(false);
+    });
 
-  const contextValue = {
-    authToken,
-    setAuthToken,
-    user,
-  };
+    return () => unsubscribe();
+  }, []);
 
   return (
-    <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
+    <UserContext.Provider value={{ user, loading }}>
+      {!loading && children}
+    </UserContext.Provider>
   );
 }

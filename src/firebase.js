@@ -1,8 +1,10 @@
+// src/firebase.js
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { getStorage } from "firebase/storage"; // <--- You need this for images!
 
+// Your web app's Firebase configuration
+// These pull values from your .env file
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
   authDomain: import.meta.env.VITE_AUTH_DOMAIN,
@@ -12,7 +14,10 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_APP_ID,
 };
 
-export const app = initializeApp(firebaseConfig);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Export the services so other files can use them
 export const auth = getAuth(app);
-export const db = getFirestore(app);
 export const storage = getStorage(app);
+export default app;
