@@ -166,3 +166,25 @@ h6 {
 .btn-close {
   filter: invert(1) grayscale(100%) brightness(200%);
 }
+
+/* --- CUSTOM SCROLLBAR (Webkit browsers like Chrome/Edge) --- */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* The track (background) */
+::-webkit-scrollbar-track {
+  background: #2b1b17; /* Darkest Brown */
+}
+
+/* The thumb (the moving part) */
+::-webkit-scrollbar-thumb {
+  background: #8d6e63; /* Latte Brown */
+  border-radius: 5px;
+  border: 2px solid #2b1b17; /* Creates padding effect */
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #ffecb3; /* Gold */
+}

@@ -13,6 +13,7 @@ import {
 import { UserContext } from "../contexts/UserContext";
 import { EVENTS_API_URL } from "../apiConfig";
 import { useNavigate } from "react-router-dom";
+import NavBar from "../components/NavBar";
 
 export default function CreatorHubPage() {
   const { user } = useContext(UserContext);
@@ -102,150 +103,194 @@ export default function CreatorHubPage() {
     );
 
   return (
-    <Container className="py-5">
-      {/* HEADER WITH BUTTONS */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="text-white">Creator Hub</h1>
-        <div>
+    <>
+      <NavBar />
+      <Container className="py-4">
+        {/* HEADER */}
+        <div className="d-flex justify-content-between align-items-center mb-5">
+          <div>
+            <h1 className="display-5 fw-bold text-white">Creator Hub</h1>
+            <p className="text-white-50">Manage your masterpieces.</p>
+          </div>
           <Button
-            variant="light"
-            className="me-2"
-            onClick={() => navigate("/dashboard")}
+            className="btn-luxury"
+            onClick={() => navigate("/create-event")}
           >
-            ← Dashboard
-          </Button>
-          <Button variant="success" onClick={() => navigate("/create-event")}>
-            + Create New Event
+            + Create New
           </Button>
         </div>
-      </div>
 
-      {error && <Alert variant="danger">{error}</Alert>}
+        {error && <Alert variant="danger">{error}</Alert>}
 
-      <Row>
-        {myEvents.length === 0 ? (
-          <Col>
-            <Card className="text-center p-5">
-              <Card.Body>
-                <h3>No events yet</h3>
-                <p>Start your journey by creating your first event.</p>
-                <Button
-                  variant="primary"
-                  onClick={() => navigate("/create-event")}
-                >
-                  Create Event
-                </Button>
-              </Card.Body>
-            </Card>
-          </Col>
-        ) : (
-          myEvents.map((event) => (
-            <Col key={event.id} md={6} lg={4} className="mb-4">
-              <Card className="h-100 shadow-sm">
-                <Card.Img
-                  variant="top"
-                  src={event.image_url || "https://via.placeholder.com/400x200"}
-                  style={{ height: "200px", objectFit: "cover" }}
-                />
+        <Row>
+          {myEvents.length === 0 ? (
+            <Col>
+              <Card className="text-center p-5 bg-mocha">
                 <Card.Body>
-                  <Card.Title>{event.title}</Card.Title>
-                  <Card.Text className="text-muted small">
-                    {new Date(event.event_date).toLocaleDateString()} at{" "}
-                    {event.location}
-                  </Card.Text>
-                  <div className="d-flex gap-2 mt-3">
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      onClick={() => handleEditClick(event)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => handleDelete(event.id)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
+                  <h3 style={{ color: "#ffecb3" }}>No events yet</h3>
+                  <p className="text-white-50">
+                    Start your journey by creating your first event.
+                  </p>
+                  <Button
+                    className="btn-luxury mt-3"
+                    onClick={() => navigate("/create-event")}
+                  >
+                    Create Event
+                  </Button>
                 </Card.Body>
               </Card>
             </Col>
-          ))
-        )}
-      </Row>
+          ) : (
+            myEvents.map((event) => (
+              <Col key={event.id} md={6} lg={4} className="mb-4">
+                {/* USING MOCHA THEME FOR CARDS */}
+                <Card className="h-100 bg-mocha shadow-lg">
+                  <Card.Img
+                    variant="top"
+                    src={
+                      event.image_url || "https://via.placeholder.com/400x200"
+                    }
+                    style={{
+                      height: "200px",
+                      objectFit: "cover",
+                      borderTopLeftRadius: "15px",
+                      borderTopRightRadius: "15px",
+                    }}
+                  />
+                  <Card.Body className="d-flex flex-column">
+                    <Card.Title
+                      className="fw-bold"
+                      style={{ color: "#ffecb3" }}
+                    >
+                      {event.title}
+                    </Card.Title>
+                    <Card.Text className="small" style={{ color: "#d7ccc8" }}>
+                      📅 {new Date(event.event_date).toLocaleDateString()}{" "}
+                      <br /> 📍 {event.location}
+                    </Card.Text>
 
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Event</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {editingEvent && (
-            <Form onSubmit={handleEditSubmit}>
-              <Form.Group className="mb-3">
-                <Form.Label>Title</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={editingEvent.title}
-                  onChange={(e) =>
-                    setEditingEvent({ ...editingEvent, title: e.target.value })
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Description</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  value={editingEvent.description}
-                  onChange={(e) =>
-                    setEditingEvent({
-                      ...editingEvent,
-                      description: e.target.value,
-                    })
-                  }
-                />
-              </Form.Group>
-              <Row>
-                <Col>
-                  <Form.Control
-                    type="date"
-                    value={
-                      editingEvent.event_date
-                        ? new Date(editingEvent.event_date)
-                            .toISOString()
-                            .split("T")[0]
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setEditingEvent({
-                        ...editingEvent,
-                        event_date: e.target.value,
-                      })
-                    }
-                  />
-                </Col>
-                <Col>
-                  <Form.Control
-                    type="time"
-                    value={editingEvent.event_time}
-                    onChange={(e) =>
-                      setEditingEvent({
-                        ...editingEvent,
-                        event_time: e.target.value,
-                      })
-                    }
-                  />
-                </Col>
-              </Row>
-              <Button variant="primary" type="submit" className="mt-3 w-100">
-                Save Changes
-              </Button>
-            </Form>
+                    <div className="mt-auto pt-3 d-flex gap-2">
+                      <Button
+                        className="btn-luxury w-100"
+                        style={{ fontSize: "0.8rem" }}
+                        onClick={() => handleEditClick(event)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        style={{ borderRadius: "50px" }}
+                        onClick={() => handleDelete(event.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))
           )}
-        </Modal.Body>
-      </Modal>
-    </Container>
+        </Row>
+
+        {/* EDIT MODAL - WILL USE GLOBAL DARK THEME */}
+        <Modal
+          show={showEditModal}
+          onHide={() => setShowEditModal(false)}
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Edit Event</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {editingEvent && (
+              <Form onSubmit={handleEditSubmit}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Title</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={editingEvent.title}
+                    onChange={(e) =>
+                      setEditingEvent({
+                        ...editingEvent,
+                        title: e.target.value,
+                      })
+                    }
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Description</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    value={editingEvent.description}
+                    onChange={(e) =>
+                      setEditingEvent({
+                        ...editingEvent,
+                        description: e.target.value,
+                      })
+                    }
+                  />
+                </Form.Group>
+                <Row>
+                  <Col>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Date</Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={
+                          editingEvent.event_date
+                            ? new Date(editingEvent.event_date)
+                                .toISOString()
+                                .split("T")[0]
+                            : ""
+                        }
+                        onChange={(e) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            event_date: e.target.value,
+                          })
+                        }
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Time</Form.Label>
+                      <Form.Control
+                        type="time"
+                        value={editingEvent.event_time}
+                        onChange={(e) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            event_time: e.target.value,
+                          })
+                        }
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Form.Group className="mb-3">
+                  <Form.Label>Location</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={editingEvent.location}
+                    onChange={(e) =>
+                      setEditingEvent({
+                        ...editingEvent,
+                        location: e.target.value,
+                      })
+                    }
+                  />
+                </Form.Group>
+                <Button className="btn-luxury w-100 mt-2" type="submit">
+                  Save Changes
+                </Button>
+              </Form>
+            )}
+          </Modal.Body>
+        </Modal>
+      </Container>
+    </>
   );
 }

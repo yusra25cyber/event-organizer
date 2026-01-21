@@ -12,6 +12,7 @@ import {
 } from "react-bootstrap";
 import { UserContext } from "../contexts/UserContext.jsx";
 import { EVENTS_API_URL } from "../apiConfig";
+import NavBar from "../components/NavBar";
 
 export default function MyBookingsPage() {
   const { user } = useContext(UserContext);
@@ -23,9 +24,7 @@ export default function MyBookingsPage() {
 
   useEffect(() => {
     const fetchBookings = async () => {
-      // Handle Firebase UID vs regular ID
       const userId = user?.uid || user?.id;
-
       if (!userId) return;
 
       setLoading(true);
@@ -73,11 +72,10 @@ export default function MyBookingsPage() {
 
       if (response.ok) {
         const updatedBooking = await response.json();
-        // Update local state to show changes immediately
         setBookings(
           bookings.map((b) =>
             b.booking_id === editingBooking.booking_id
-              ? { ...b, ...updatedBooking } // Merge new data (note: image comes from event, not booking update)
+              ? { ...b, ...updatedBooking }
               : b,
           ),
         );
@@ -96,159 +94,162 @@ export default function MyBookingsPage() {
       try {
         const response = await fetch(
           `${EVENTS_API_URL}/api/bookings/${bookingId}`,
-          {
-            method: "DELETE",
-          },
+          { method: "DELETE" },
         );
-        if (response.ok) {
+        if (response.ok)
           setBookings(bookings.filter((b) => b.booking_id !== bookingId));
-        } else {
+        else {
           const errorData = await response.json();
-          alert(`Failed to cancel booking: ${errorData.error}`);
+          alert(`Failed to cancel: ${errorData.error}`);
         }
       } catch (error) {
-        console.error("Error cancelling booking:", error);
+        console.error("Error cancelling:", error);
       }
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
       <Container className="text-center mt-5">
-        <Spinner animation="border" />
-        <p>Loading your bookings...</p>
+        <Spinner animation="border" variant="light" />
       </Container>
     );
-  }
 
   return (
-    <Container className="mt-4">
-      <Row className="mb-3 align-items-center">
-        <Col>
-          <h1 className="display-5">My Bookings</h1>
-        </Col>
-        <Col className="text-end">
-          <Button
-            variant="outline-secondary"
-            onClick={() => navigate("/dashboard")}
-          >
-            Back to Dashboard
-          </Button>
-        </Col>
-      </Row>
+    <>
+      <NavBar />
+      <Container className="py-4">
+        <div className="mb-5">
+          <h1 className="display-5 fw-bold text-white">My Bookings</h1>
+          <p className="text-white-50">Your ticket wallet.</p>
+        </div>
 
-      <Row>
-        {bookings.length > 0 ? (
-          bookings.map((booking) => (
-            <Col key={booking.booking_id} md={6} lg={4} className="mb-4">
-              <Card className="h-100 shadow-sm">
-                {/* ADDED IMAGE HERE */}
-                <Card.Img
-                  variant="top"
-                  src={
-                    booking.image_url ||
-                    "https://via.placeholder.com/400x200?text=No+Image"
-                  }
-                  style={{ height: "200px", objectFit: "cover" }}
-                />
+        <Row>
+          {bookings.length > 0 ? (
+            bookings.map((booking) => (
+              <Col key={booking.booking_id} md={6} lg={4} className="mb-4">
+                {/* USING CARAMEL THEME FOR BOOKINGS */}
+                <Card className="h-100 bg-caramel shadow-lg">
+                  <Card.Img
+                    variant="top"
+                    src={
+                      booking.image_url ||
+                      "https://via.placeholder.com/400x200?text=No+Image"
+                    }
+                    style={{
+                      height: "180px",
+                      objectFit: "cover",
+                      borderTopLeftRadius: "15px",
+                      borderTopRightRadius: "15px",
+                    }}
+                  />
+                  <Card.Body className="d-flex flex-column">
+                    <Card.Title className="fw-bold text-white">
+                      {booking.title}
+                    </Card.Title>
+                    <Card.Text className="small text-white-50">
+                      📅 {new Date(booking.event_date).toLocaleDateString()}{" "}
+                      <br />
+                      📍 {booking.location}
+                    </Card.Text>
+
+                    <div
+                      className="p-3 mb-3 rounded"
+                      style={{ background: "rgba(0,0,0,0.2)" }}
+                    >
+                      <div className="d-flex justify-content-between text-white">
+                        <span>Tickets:</span>{" "}
+                        <strong>{booking.number_of_tickets}</strong>
+                      </div>
+                      {booking.notes && (
+                        <div className="text-white-50 small mt-1">
+                          Note: {booking.notes}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-auto d-flex gap-2">
+                      <Button
+                        className="btn-luxury w-100"
+                        onClick={() => handleShowEditModal(booking)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline-light"
+                        size="sm"
+                        style={{ borderRadius: "50px" }}
+                        onClick={() => handleCancel(booking.booking_id)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))
+          ) : (
+            <Col>
+              <Card className="text-center p-5 bg-caramel">
                 <Card.Body>
-                  <Card.Title>{booking.title}</Card.Title>
-                  <Card.Text>
-                    <strong>Date:</strong>{" "}
-                    {new Date(booking.event_date).toLocaleDateString()}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Location:</strong> {booking.location}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Tickets:</strong> {booking.number_of_tickets}
-                  </Card.Text>
-                  <Card.Text>
-                    <strong>Notes:</strong> {booking.notes || "None"}
-                  </Card.Text>
-
-                  <div className="mt-3">
-                    <Button
-                      variant="outline-primary"
-                      className="me-2"
-                      size="sm"
-                      onClick={() => handleShowEditModal(booking)}
-                    >
-                      Edit Details
-                    </Button>
-
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => handleCancel(booking.booking_id)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
+                  <h3 className="text-white">No bookings yet</h3>
+                  <p className="text-white-50">Go find something fun to do!</p>
+                  <Button
+                    className="btn-luxury mt-3"
+                    onClick={() => navigate("/events")}
+                  >
+                    Browse Events
+                  </Button>
                 </Card.Body>
               </Card>
             </Col>
-          ))
-        ) : (
-          <Col>
-            <p>You have no bookings yet. Go explore some events!</p>
-            <Button variant="primary" onClick={() => navigate("/events")}>
-              Browse Events
-            </Button>
-          </Col>
-        )}
-      </Row>
-
-      {/* EDIT MODAL */}
-      <Modal show={showEditModal} onHide={handleCloseEditModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Booking</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {editingBooking && (
-            <Form onSubmit={handleSaveChanges}>
-              <Form.Group className="mb-3">
-                <Form.Label>Number of Tickets</Form.Label>
-                <Form.Control
-                  type="number"
-                  min="1"
-                  value={editingBooking.number_of_tickets}
-                  onChange={(e) =>
-                    setEditingBooking({
-                      ...editingBooking,
-                      number_of_tickets: parseInt(e.target.value) || 1,
-                    })
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Notes</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  value={editingBooking.notes || ""}
-                  onChange={(e) =>
-                    setEditingBooking({
-                      ...editingBooking,
-                      notes: e.target.value,
-                    })
-                  }
-                />
-              </Form.Group>
-              <Button variant="primary" type="submit">
-                Save Changes
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleCloseEditModal}
-                className="ms-2"
-              >
-                Close
-              </Button>
-            </Form>
           )}
-        </Modal.Body>
-      </Modal>
-    </Container>
+        </Row>
+
+        {/* EDIT MODAL */}
+        <Modal show={showEditModal} onHide={handleCloseEditModal} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Edit Booking</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {editingBooking && (
+              <Form onSubmit={handleSaveChanges}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Number of Tickets</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="1"
+                    value={editingBooking.number_of_tickets}
+                    onChange={(e) =>
+                      setEditingBooking({
+                        ...editingBooking,
+                        number_of_tickets: parseInt(e.target.value) || 1,
+                      })
+                    }
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Notes</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    value={editingBooking.notes || ""}
+                    onChange={(e) =>
+                      setEditingBooking({
+                        ...editingBooking,
+                        notes: e.target.value,
+                      })
+                    }
+                  />
+                </Form.Group>
+                <Button className="btn-luxury w-100" type="submit">
+                  Save Changes
+                </Button>
+              </Form>
+            )}
+          </Modal.Body>
+        </Modal>
+      </Container>
+    </>
   );
 }

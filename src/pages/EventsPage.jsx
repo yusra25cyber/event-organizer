@@ -8,15 +8,19 @@ import {
   Button,
   Spinner,
   Alert,
+  Form,
 } from "react-bootstrap";
 import { UserContext } from "../contexts/UserContext.jsx";
 import { EVENTS_API_URL } from "../apiConfig";
+import NavBar from "../components/NavBar";
 
 export default function EventsPage() {
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
 
   const [events, setEvents] = useState([]);
+  // --- NEW SEARCH STATE ---
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -42,10 +46,17 @@ export default function EventsPage() {
     fetchEvents();
   }, []);
 
-  // Booking handler
+  // --- FILTER LOGIC ---
+  const filteredEvents = events.filter(
+    (event) =>
+      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
   const handleBook = async (eventId, eventTitle) => {
-    if (!user?.id) {
-      alert("Could not verify user. Please log in first.");
+    const userId = user?.uid || user?.id;
+    if (!userId) {
+      alert("Please log in.");
       return;
     }
 
@@ -54,106 +65,108 @@ export default function EventsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: user.id,
+          user_id: userId,
           event_id: eventId,
           number_of_tickets: 1,
-          notes: "",
         }),
       });
-
       if (response.ok) {
-        alert(`Successfully booked "${eventTitle}"!`);
+        alert(`Booked "${eventTitle}"!`);
         navigate("/my-bookings");
       } else {
         const data = await response.json();
-        alert(`Booking failed: ${data.error || "Try again later."}`);
+        alert(data.error);
       }
     } catch (err) {
-      console.error("Error booking event:", err);
-      alert("Network error. Please try again.");
+      alert("Network error");
     }
   };
 
-  if (isLoading) {
-    return (
-      <Container className="text-center mt-5">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-3">Loading upcoming events...</p>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container className="mt-5">
-        <Alert variant="danger">Error: {error}</Alert>
-      </Container>
-    );
-  }
-
   return (
-    <Container className="mt-4">
-      <Row className="mb-3 align-items-center">
-        <Col>
-          <h1 className="display-5">Explore Upcoming Events</h1>
-        </Col>
-        <Col className="text-end">
-          <Button
-            variant="outline-primary"
-            onClick={() => navigate("/dashboard")}
-          >
-            Back to Dashboard
-          </Button>
-        </Col>
-      </Row>
-
-      <Row>
-        {events.length === 0 ? (
-          <Col>
-            <p>No upcoming events found. Check back soon!</p>
+    <>
+      <NavBar />
+      <Container className="py-4">
+        <Row className="mb-4 align-items-center">
+          <Col md={6}>
+            <h1 className="display-5 fw-bold">Explore</h1>
           </Col>
-        ) : (
-          events.map((event) => {
-            const dateString = event.event_date
-              ? new Date(event.event_date).toLocaleDateString()
-              : "No date";
-            const description = event.description || "No description provided.";
+          <Col md={6}>
+            {/* --- SEARCH INPUT --- */}
+            <Form.Control
+              type="text"
+              placeholder="Search events or locations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ padding: "10px", fontSize: "1rem" }}
+            />
+          </Col>
+        </Row>
 
-            return (
-              <Col key={event.id} md={4} lg={3} className="mb-4">
-                <Card className="h-100 shadow-sm">
-                  <Card.Img
-                    variant="top"
-                    src={
-                      event.image_url ||
-                      "https://via.placeholder.com/400x250.png?text=Event+Image"
-                    }
-                    style={{ height: "180px", objectFit: "cover" }}
-                  />
-                  <Card.Body className="d-flex flex-column">
-                    <Card.Title>{event.title || "Untitled Event"}</Card.Title>
-                    <Card.Text className="text-muted small">
-                      {dateString} at {event.location || "TBA"}
-                    </Card.Text>
-                    <Card.Text style={{ flexGrow: 1, fontSize: "0.9rem" }}>
-                      {description.length > 100
-                        ? description.substring(0, 100) + "..."
-                        : description}
-                    </Card.Text>
-                    <Button
-                      variant="primary"
-                      className="mt-auto"
-                      onClick={() => handleBook(event.id, event.title)}
-                    >
-                      Book Now
-                    </Button>
-                  </Card.Body>
-                </Card>
-              </Col>
-            );
-          })
+        {isLoading && (
+          <div className="text-center mt-5">
+            <Spinner animation="border" variant="light" />
+          </div>
         )}
-      </Row>
-    </Container>
+        {error && <Alert variant="danger">{error}</Alert>}
+
+        {!isLoading && !error && (
+          <Row>
+            {filteredEvents.length === 0 ? (
+              <Col className="text-center mt-5">
+                <h3 className="text-white-50">
+                  No events found matching "{searchTerm}"
+                </h3>
+              </Col>
+            ) : (
+              filteredEvents.map((event) => {
+                const dateString = event.event_date
+                  ? new Date(event.event_date).toLocaleDateString()
+                  : "TBA";
+
+                return (
+                  <Col key={event.id} md={4} lg={3} className="mb-4">
+                    <Card className="h-100 bg-mocha shadow-sm">
+                      <Card.Img
+                        variant="top"
+                        src={
+                          event.image_url ||
+                          "https://via.placeholder.com/400x250.png?text=Event"
+                        }
+                        style={{
+                          height: "180px",
+                          objectFit: "cover",
+                          borderTopLeftRadius: "15px",
+                          borderTopRightRadius: "15px",
+                        }}
+                      />
+                      <Card.Body className="d-flex flex-column">
+                        <Card.Title
+                          className="fw-bold"
+                          style={{ color: "#ffecb3" }}
+                        >
+                          {event.title}
+                        </Card.Title>
+                        <Card.Text
+                          className="small"
+                          style={{ color: "#d7ccc8" }}
+                        >
+                          📅 {dateString} <br /> 📍 {event.location}
+                        </Card.Text>
+                        <Button
+                          className="btn-luxury mt-auto w-100"
+                          onClick={() => handleBook(event.id, event.title)}
+                        >
+                          Book Now
+                        </Button>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                );
+              })
+            )}
+          </Row>
+        )}
+      </Container>
+    </>
   );
 }
