@@ -66,7 +66,7 @@ export default function HomePage() {
                 className="lead mb-0"
                 style={{ color: "#e0e0e0", fontSize: "1.1rem" }}
               >
-                Welcome to <strong>EventBooker</strong>. Your personal space for
+                Welcome to <strong>Eventizer</strong>. Your personal space for
                 organizing memories. Manage your schedule, discover new places,
                 and create unforgettable moments.
               </p>
