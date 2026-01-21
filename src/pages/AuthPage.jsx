@@ -1,7 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Card, Form, Button, Alert } from "react-bootstrap";
-// 1. IMPORT FIREBASE FUNCTIONS
 import {
   signInWithPopup,
   GoogleAuthProvider,
@@ -15,7 +14,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
 
-  // Redirect if already logged in
+  // Background check: If user is already logged in, go to dashboard
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
@@ -35,7 +34,7 @@ export default function AuthPage() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      // Navigation happens automatically via useEffect above
+      navigate("/dashboard");
     } catch (err) {
       console.error(err);
       setError("Google Sign In Failed.");
@@ -43,11 +42,18 @@ export default function AuthPage() {
     }
   };
 
-  // --- EMAIL LOGIN ---
+  // --- EMAIL LOGIN/SIGNUP ---
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    // 1. CLIENT-SIDE VALIDATION (Check before sending to Firebase)
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      setLoading(false);
+      return; // Stop here! Don't talk to Firebase.
+    }
 
     try {
       if (isLogin) {
@@ -57,16 +63,26 @@ export default function AuthPage() {
         // Sign Up
         await createUserWithEmailAndPassword(auth, email, password);
       }
-      // Navigation happens automatically via useEffect above
+
+      // Force Redirect on Success
+      navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      if (err.code === "auth/email-already-in-use")
-        setError("Email already used.");
-      else if (err.code === "auth/wrong-password") setError("Wrong password.");
-      else if (err.code === "auth/user-not-found") setError("User not found.");
-      else if (err.code === "auth/weak-password")
-        setError("Password too weak.");
-      else setError(err.message);
+
+      // 2. CLEAR ERROR MESSAGES
+      if (err.code === "auth/email-already-in-use") {
+        setError("This email is already registered. Please Log In instead.");
+      } else if (err.code === "auth/wrong-password") {
+        setError("Incorrect password. Please try again.");
+      } else if (err.code === "auth/user-not-found") {
+        setError("No account found with this email.");
+      } else if (err.code === "auth/weak-password") {
+        setError("Password is too weak. Use at least 6 characters.");
+      } else if (err.code === "auth/invalid-email") {
+        setError("Please enter a valid email address.");
+      } else {
+        setError("Authentication failed. Please check your details.");
+      }
       setLoading(false);
     }
   };
@@ -83,11 +99,25 @@ export default function AuthPage() {
         <Card.Body>
           <div className="text-center mb-4">
             <h2 className="fw-bold" style={{ color: "#ffecb3" }}>
-              {isLogin ? "Welcome Back" : "Join EventBooker"}
+              {isLogin ? "Welcome Back" : "Join Eventide"}
             </h2>
+            <p className="text-white-50 small">
+              {isLogin
+                ? "Log in to continue"
+                : "Create an account to get started"}
+            </p>
           </div>
 
-          {error && <Alert variant="danger">{error}</Alert>}
+          {/* Error Alert */}
+          {error && (
+            <Alert
+              variant="danger"
+              className="text-center"
+              style={{ fontSize: "0.9rem" }}
+            >
+              {error}
+            </Alert>
+          )}
 
           <Form onSubmit={handleEmailAuth}>
             <Form.Group className="mb-3">
@@ -96,6 +126,7 @@ export default function AuthPage() {
               </Form.Label>
               <Form.Control
                 type="email"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -106,10 +137,16 @@ export default function AuthPage() {
               <Form.Label style={{ color: "#d7ccc8" }}>Password</Form.Label>
               <Form.Control
                 type="password"
+                placeholder="Min. 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              {!isLogin && (
+                <Form.Text className="text-white-50 small">
+                  Must be at least 6 characters.
+                </Form.Text>
+              )}
             </Form.Group>
 
             <Button
@@ -139,7 +176,10 @@ export default function AuthPage() {
                 cursor: "pointer",
                 textDecoration: "underline",
               }}
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError(""); // Clear errors when switching
+              }}
             >
               {isLogin ? "Need an account? Sign Up" : "Have an account? Log In"}
             </span>
