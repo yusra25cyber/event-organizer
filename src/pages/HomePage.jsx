@@ -1,234 +1,161 @@
-import { Container, Row, Col, Button, Card } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom"; // Make sure useNavigate is imported
-import { useEffect, useState, useContext } from "react";
-import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
+import React, { useContext, useState, useEffect } from "react";
+import { Container, Row, Col, Card, Button, Image } from "react-bootstrap";
 import { UserContext } from "../contexts/UserContext";
-import { EVENTS_API_URL } from "../apiConfig";
-///import { getAuth }  from" firebase/auth"
-import { AuthContext } from "../components/AuthProvider";
-// --- Main HomePage Component ---
+import { useNavigate } from "react-router-dom";
+import NavBar from "../components/NavBar";
+
+const QUOTES = [
+  "The best way to predict the future is to create it.",
+  "Life is either a daring adventure or nothing at all.",
+  "Do one thing every day that scares you.",
+  "Happiness comes from your own actions.",
+  "Turn your wounds into wisdom.",
+  "Simplicity is the ultimate sophistication.",
+];
 
 export default function HomePage() {
-  const { currentUser } = useContext(AuthContext);
+  const { user } = useContext(UserContext);
   const navigate = useNavigate();
-
-  if (!currentUser) {
-    return null;
-  }
-
-  const username =
-    currentUser.displayName || currentUser.email?.split("@")[0] || "Superstar";
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate("/login");
-  };
-
-  return (
-    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
-      <HeroSection username={username} onLogout={handleLogout} />
-      <Container className="py-5">
-        <MainGrid />
-      </Container>
-      <FooterBar />
-    </div>
-  );
-}
-
-// --- Sub-component: HeroSection (Accepts onLogout prop) ---
-function HeroSection({ username, onLogout }) {
-  const avatarUrl = `https://api.dicebear.com/8.x/thumbs/svg?seed=${username}`;
-
-  return (
-    <div
-      className="p-5 text-white bg-dark"
-      style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(https://images.unsplash.com/photo-1505238680356-667803448bb6?q=80&w=2070&auto=format&fit=crop)`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        borderRadius: "0 0 1rem 1rem",
-      }}
-    >
-      <Container>
-        <Row className="align-items-center">
-          <Col md="auto">
-            <img
-              src={avatarUrl}
-              alt="User Avatar"
-              style={{
-                width: "80px",
-                height: "80px",
-                borderRadius: "50%",
-                border: "3px solid white",
-                backgroundColor: "#fff",
-              }}
-            />
-          </Col>
-          <Col>
-            <h1 className="display-4">Welcome back, {username}.</h1>
-            <p className="lead">
-              Your mission control for creating unforgettable experiences.
-            </p>
-          </Col>
-          <Col md="auto" className="ms-auto">
-            {/* This is now a button that calls the onLogout function */}
-            <Button variant="outline-light" onClick={onLogout}>
-              <i className="bi bi-box-arrow-right me-2"></i>Logout
-            </Button>
-          </Col>
-        </Row>
-      </Container>
-    </div>
-  );
-}
-
-// --- Sub-component: MainGrid (Data-Driven) ---
-function MainGrid() {
-  //const authContext = useContext(AuthContext);
-  //console.log(authContext);
-  const { user } = useContext(AuthContext);
-  // const { currentUser } = useContext(AuthContext);
-  const [hostedEventsCount, setHostedEventsCount] = useState(0);
-  const [bookingsCount, setBookingsCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [quote, setQuote] = useState("");
 
   useEffect(() => {
-    if (!user?.id) {
-      setIsLoading(false);
-      return;
-    }
-
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [hostedEventsResponse, bookingsResponse] = await Promise.all([
-          fetch(`${EVENTS_API_URL}/api/users/${user.id}/events`),
-          fetch(`${EVENTS_API_URL}/api/users/${user.id}/bookings`),
-        ]);
-
-        if (hostedEventsResponse.ok) {
-          const hostedEvents = await hostedEventsResponse.json();
-          setHostedEventsCount(hostedEvents.length);
-        }
-
-        if (bookingsResponse.ok) {
-          const bookings = await bookingsResponse.json();
-          setBookingsCount(bookings.length);
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user]);
-
-  if (isLoading) {
-    return <p className="text-center py-5">Loading your mission control...</p>;
-  }
-
-  return (
-    <Row xs={1} md={2} lg={4} className="g-4">
-      <Col>
-        <ActionCard
-          icon="bi-search-heart"
-          title="Explore Events"
-          text="Discover and book your next great experience."
-          buttonText="Browse All"
-          buttonVariant="primary"
-          linkTo="/events"
-        />
-      </Col>
-      <Col>
-        <ActionCard
-          icon="bi-plus-circle-dotted"
-          title="Create New Event"
-          text="Have an idea? Bring it to life and invite others."
-          buttonText="Start Building"
-          buttonVariant="outline-primary"
-          linkTo="/create-event"
-        />
-      </Col>
-      <Col>
-        <ActionCard
-          icon="bi-calendar-heart"
-          title="My Creator Hub"
-          text={`You are hosting ${hostedEventsCount} events.`}
-          buttonText="Go to Hub"
-          buttonVariant="success"
-          linkTo="/creator-hub"
-        />
-      </Col>
-      <Col>
-        <ActionCard
-          icon="bi-ticket-perforated"
-          title="My Bookings"
-          text={`You have ${bookingsCount} upcoming bookings.`}
-          buttonText="View Bookings"
-          buttonVariant="info"
-          linkTo="/my-bookings"
-        />
-      </Col>
-    </Row>
-  );
-}
-
-// --- Reusable Component: ActionCard ---
-function ActionCard({ icon, title, text, buttonText, buttonVariant, linkTo }) {
-  return (
-    <Card className="h-100 text-center shadow-sm">
-      <Card.Body className="d-flex flex-column">
-        <i
-          className={`bi ${icon}`}
-          style={{ fontSize: "3rem", color: "#0d6efd" }}
-        ></i>
-        <Card.Title className="mt-3">{title}</Card.Title>
-        <Card.Text className="flex-grow-1">{text}</Card.Text>
-        <Link to={linkTo}>
-          <Button variant={buttonVariant} className="mt-auto">
-            {buttonText}
-          </Button>
-        </Link>
-      </Card.Body>
-    </Card>
-  );
-}
-
-// --- Sub-component: FooterBar ---
-function FooterBar() {
-  const [quote, setQuote] = useState("Loading inspiration...");
-
-  useEffect(() => {
-    fetch("https://api.quotable.io/random?maxLength=100")
-      .then((res) => {
-        if (!res.ok) throw new Error("API not available");
-        return res.json();
-      })
-      .then((data) => setQuote(`${data.content} — ${data.author}`))
-      .catch(() =>
-        setQuote(
-          "The only way to do great work is to love what you do. — Steve Jobs",
-        ),
-      );
+    setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
   }, []);
 
+  // --- 1. NAME LOGIC ---
+  let formattedName = "Explorer"; // Default fallback
+  if (user?.email) {
+    // Take the part before @ (e.g. 'sara' from sara@gmail.com)
+    const rawName = user.email.split("@")[0];
+    // Capitalize first letter (e.g. 'Sara')
+    formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+  } else if (user?.displayName) {
+    formattedName = user.displayName;
+  }
+
+  // --- 2. CUTE CARTOON AVATAR ---
+  // We use the "Adventurer" style from DiceBear using your name as the seed
+  const userAvatar = `https://api.dicebear.com/9.x/adventurer/svg?seed=${formattedName}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+
   return (
-    <div
-      className="fixed-bottom bg-white shadow-lg"
-      style={{ borderTop: "1px solid #e9ecef" }}
-    >
-      <Container className="d-flex justify-content-between align-items-center py-2">
-        <span className="text-primary">
-          <strong>Today's Thought:</strong>{" "}
-          <em className="text-muted">{quote}</em>
-        </span>
-        <Button variant="link">
-          <i className="bi bi-gear" style={{ fontSize: "1.2rem" }}></i>
-        </Button>
+    <>
+      <NavBar />
+
+      <Container className="py-3">
+        {/* WELCOME BANNER */}
+        <div className="welcome-banner mb-5">
+          <Row className="align-items-center">
+            <Col md={3} className="text-center">
+              <Image
+                src={userAvatar}
+                roundedCircle
+                width={130}
+                height={130}
+                className="shadow-lg bg-light" // Added white bg behind avatar so it pops
+                style={{
+                  border: "4px solid rgba(255,255,255,0.5)",
+                  padding: "2px",
+                }}
+              />
+            </Col>
+            <Col md={9}>
+              <h1 className="display-4 fw-bold mb-3">
+                Hello, {formattedName}!
+              </h1>
+              <p
+                className="lead mb-0"
+                style={{ color: "#e0e0e0", fontSize: "1.1rem" }}
+              >
+                Welcome to <strong>EventBooker</strong>. Your personal space for
+                organizing memories. Manage your schedule, discover new places,
+                and create unforgettable moments.
+              </p>
+            </Col>
+          </Row>
+        </div>
+
+        {/* SECTION TITLE */}
+        <h4
+          className="mb-4 text-center text-uppercase"
+          style={{ color: "#bcaaa4", letterSpacing: "2px", fontSize: "0.9rem" }}
+        >
+          — Dashboard —
+        </h4>
+
+        {/* ACTION CARDS */}
+        <Row>
+          {/* Card 1: Mocha */}
+          <Col md={4} className="mb-4">
+            <Card className="h-100 bg-mocha text-center">
+              <Card.Body className="p-4 d-flex flex-column align-items-center">
+                <div className="mb-3 fs-1">🌍</div>
+                <Card.Title>Explore</Card.Title>
+                <Card.Text style={{ color: "#ffecb3", fontSize: "0.9rem" }}>
+                  Discover events near you.
+                </Card.Text>
+                <Button
+                  className="btn-luxury mt-auto"
+                  onClick={() => navigate("/events")}
+                >
+                  Browse
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {/* Card 2: Caramel */}
+          <Col md={4} className="mb-4">
+            <Card className="h-100 bg-caramel text-center">
+              <Card.Body className="p-4 d-flex flex-column align-items-center">
+                <div className="mb-3 fs-1">✒️</div>
+                <Card.Title>Creator Hub</Card.Title>
+                <Card.Text style={{ color: "#f0f0f0", fontSize: "0.9rem" }}>
+                  Plan and edit your events.
+                </Card.Text>
+                <Button
+                  className="btn-luxury mt-auto"
+                  onClick={() => navigate("/creator-hub")}
+                >
+                  Manage
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {/* Card 3: Latte */}
+          <Col md={4} className="mb-4">
+            <Card className="h-100 bg-latte text-center">
+              <Card.Body className="p-4 d-flex flex-column align-items-center">
+                <div className="mb-3 fs-1">🎫</div>
+                <Card.Title style={{ fontWeight: "bold", color: "#2b1b17" }}>
+                  My Bookings
+                </Card.Title>
+                <Card.Text style={{ color: "#3e2723", fontSize: "0.9rem" }}>
+                  View your tickets.
+                </Card.Text>
+                <Button
+                  className="btn-luxury mt-auto"
+                  onClick={() => navigate("/my-bookings")}
+                >
+                  View
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* FOOTER QUOTE */}
+        <div className="text-center pb-5">
+          <div className="quote-pill">
+            <p
+              className="fst-italic mb-0"
+              style={{ color: "#ffecb3", fontSize: "1.1rem" }}
+            >
+              "{quote}"
+            </p>
+          </div>
+        </div>
       </Container>
-    </div>
+    </>
   );
 }

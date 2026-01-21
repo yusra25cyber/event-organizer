@@ -23,14 +23,18 @@ export default function MyBookingsPage() {
 
   useEffect(() => {
     const fetchBookings = async () => {
-      if (!user) return;
+      // Handle Firebase UID vs regular ID
+      const userId = user?.uid || user?.id;
+
+      if (!userId) return;
+
       setLoading(true);
       try {
         const response = await fetch(
-          `${EVENTS_API_URL}/api/users/${user.id}/bookings`
+          `${EVENTS_API_URL}/api/users/${userId}/bookings`,
         );
         const data = await response.json();
-        setBookings(data);
+        setBookings(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error fetching bookings:", error);
       } finally {
@@ -64,17 +68,18 @@ export default function MyBookingsPage() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedData),
-        }
+        },
       );
 
       if (response.ok) {
         const updatedBooking = await response.json();
+        // Update local state to show changes immediately
         setBookings(
           bookings.map((b) =>
             b.booking_id === editingBooking.booking_id
-              ? { ...b, ...updatedBooking }
-              : b
-          )
+              ? { ...b, ...updatedBooking } // Merge new data (note: image comes from event, not booking update)
+              : b,
+          ),
         );
         handleCloseEditModal();
       } else {
@@ -93,7 +98,7 @@ export default function MyBookingsPage() {
           `${EVENTS_API_URL}/api/bookings/${bookingId}`,
           {
             method: "DELETE",
-          }
+          },
         );
         if (response.ok) {
           setBookings(bookings.filter((b) => b.booking_id !== bookingId));
@@ -120,7 +125,7 @@ export default function MyBookingsPage() {
     <Container className="mt-4">
       <Row className="mb-3 align-items-center">
         <Col>
-          <h1>My Bookings</h1>
+          <h1 className="display-5">My Bookings</h1>
         </Col>
         <Col className="text-end">
           <Button
@@ -135,8 +140,17 @@ export default function MyBookingsPage() {
       <Row>
         {bookings.length > 0 ? (
           bookings.map((booking) => (
-            <Col key={booking.booking_id} md={6} className="mb-4">
-              <Card>
+            <Col key={booking.booking_id} md={6} lg={4} className="mb-4">
+              <Card className="h-100 shadow-sm">
+                {/* ADDED IMAGE HERE */}
+                <Card.Img
+                  variant="top"
+                  src={
+                    booking.image_url ||
+                    "https://via.placeholder.com/400x200?text=No+Image"
+                  }
+                  style={{ height: "200px", objectFit: "cover" }}
+                />
                 <Card.Body>
                   <Card.Title>{booking.title}</Card.Title>
                   <Card.Text>
@@ -144,37 +158,51 @@ export default function MyBookingsPage() {
                     {new Date(booking.event_date).toLocaleDateString()}
                   </Card.Text>
                   <Card.Text>
+                    <strong>Location:</strong> {booking.location}
+                  </Card.Text>
+                  <Card.Text>
                     <strong>Tickets:</strong> {booking.number_of_tickets}
                   </Card.Text>
                   <Card.Text>
-                    <strong>Notes:</strong> {booking.notes || "N/A"}
+                    <strong>Notes:</strong> {booking.notes || "None"}
                   </Card.Text>
-                  <Button
-                    variant="secondary"
-                    className="me-2"
-                    onClick={() => handleShowEditModal(booking)}
-                  >
-                    Edit
-                  </Button>
 
-                  <Button
-                    variant="danger"
-                    onClick={() => handleCancel(booking.booking_id)}
-                  >
-                    Cancel
-                  </Button>
+                  <div className="mt-3">
+                    <Button
+                      variant="outline-primary"
+                      className="me-2"
+                      size="sm"
+                      onClick={() => handleShowEditModal(booking)}
+                    >
+                      Edit Details
+                    </Button>
+
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => handleCancel(booking.booking_id)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </Card.Body>
               </Card>
             </Col>
           ))
         ) : (
-          <p>You have no bookings yet. Go explore some events!</p>
+          <Col>
+            <p>You have no bookings yet. Go explore some events!</p>
+            <Button variant="primary" onClick={() => navigate("/events")}>
+              Browse Events
+            </Button>
+          </Col>
         )}
       </Row>
 
+      {/* EDIT MODAL */}
       <Modal show={showEditModal} onHide={handleCloseEditModal} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Edit Booking for "{editingBooking?.title}"</Modal.Title>
+          <Modal.Title>Edit Booking</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {editingBooking && (
